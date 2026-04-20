@@ -86,12 +86,12 @@ const SupportPageContent: React.FC = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Support Center</h1>
-        <p className="text-gray-600 mt-2">Get help and find answers to common questions</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Support Center</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Get help and find answers to common questions</p>
       </div>
 
       {/* Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
         <div className="flex gap-4">
           {["faq", "contact"].map((tab) => (
             <button
@@ -116,26 +116,26 @@ const SupportPageContent: React.FC = () => {
           <input
             type="text"
             placeholder="Search FAQs..."
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full px-4 py-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
           {/* FAQ Sections */}
           {faqs.map((section, idx) => (
-            <div key={idx} className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h2 className="text-lg font-bold text-gray-900 mb-4">
+            <div key={idx} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
                 {section.category}
               </h2>
               <div className="space-y-4">
                 {section.questions.map((item, qidx) => (
                   <details
                     key={qidx}
-                    className="border border-gray-200 rounded-lg"
+                    className="border border-gray-200 dark:border-gray-700 rounded-lg"
                   >
-                    <summary className="p-4 cursor-pointer font-medium text-gray-900 hover:bg-gray-50 flex items-center justify-between">
+                    <summary className="p-4 cursor-pointer font-medium text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between">
                       {item.q}
                       <span className="text-blue-600">+</span>
                     </summary>
-                    <div className="p-4 border-t border-gray-200 bg-gray-50 text-gray-700">
+                    <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 text-gray-700 dark:text-gray-300">
                       {item.a}
                     </div>
                   </details>
@@ -150,13 +150,13 @@ const SupportPageContent: React.FC = () => {
       {activeTab === "contact" && (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Contact Form */}
-          <div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Send us a Message
             </h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Subject
                 </label>
                 <input
@@ -164,7 +164,7 @@ const SupportPageContent: React.FC = () => {
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   placeholder="What can we help you with?"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -221,9 +221,9 @@ const SupportPageContent: React.FC = () => {
           {/* Contact Info */}
           <div className="space-y-4">
             {/* Email */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Email</h3>
-              <p className="text-gray-600 mb-3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Email</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">
                 support@cfdtradingpro.com
               </p>
               <p className="text-sm text-gray-600">
@@ -232,20 +232,20 @@ const SupportPageContent: React.FC = () => {
             </div>
 
             {/* Phone */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">Phone (WhatsApp)</h3>
-              <p className="text-gray-600 mb-3">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Phone (WhatsApp)</h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-3">
                 +63 (935) 686-9755
               </p>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 Available: Mon-Fri 9AM-6PM EST
               </p>
             </div>
 
             {/* Live Chat */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-              <h3 className="text-lg font-bold text-blue-900 mb-2">Live Chat</h3>
-              <p className="text-sm text-blue-900 mb-3">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-6">
+              <h3 className="text-lg font-bold text-blue-900 dark:text-blue-200 mb-2">Live Chat</h3>
+              <p className="text-sm text-blue-900 dark:text-blue-200 mb-3">
                 Chat with our support team instantly
               </p>
               <button className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
@@ -254,11 +254,11 @@ const SupportPageContent: React.FC = () => {
             </div>
 
             {/* Status Page */}
-            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-              <h3 className="text-lg font-bold text-gray-900 mb-2">
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
                 System Status
               </h3>
-              <p className="text-green-600 font-medium">All systems operational</p>
+              <p className="text-green-600 dark:text-green-300 font-medium">All systems operational</p>
               <button className="text-blue-600 hover:text-blue-700 text-sm mt-2">
                 View status page →
               </button>

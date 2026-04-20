@@ -149,6 +149,16 @@ export async function login(req, res) {
             console.log('❌ Password mismatch for user:', email);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
+
+        // Check if user is banned
+        if (user.banned) {
+            console.log('🚫 User is banned:', email);
+            return res.status(403).json({ 
+                success: false, 
+                message: 'Your account has been banned and you cannot login. Please contact support.' 
+            });
+        }
+
         console.log('✅ Password match, generating token for user:', email);
         
         // Generate JWT token for frontend

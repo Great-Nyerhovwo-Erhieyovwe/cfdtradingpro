@@ -14,7 +14,7 @@ export async function connectDB() {
             user: process.env.DB_USER || process.env.VITE_DB_USER,
             database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'cfdtradingprodb',
             password: process.env.DB_PASS || process.env.VITE_DB_PASS || 'SilverWC@101',
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3307,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout...
@@ -33,7 +33,7 @@ export async function connectDB() {
             user: process.env.DB_USER || process.env.VITE_DB_USER,
             password: process.env.DB_PASS || process.env.VITE_DB_PASS || 'SilverWC@101',
             database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'cfdtradingprodb',
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3307,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout

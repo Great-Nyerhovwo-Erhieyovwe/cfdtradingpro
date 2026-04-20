@@ -17,7 +17,9 @@ import { VerificationsSection } from "../../components/Admin/sections/Verificati
 import { UpgradesSection } from "../../components/Admin/sections/UpgradesSection";
 import { UsersSection } from "../../components/Admin/sections/UsersSection";
 import { TradesSection } from "../../components/Admin/sections/TradesSection";
-import { MessagesSection } from "../../components/Admin/sections/MessagesSection";
+import { DepositSettingsSection } from "../../components/Admin/sections/DepositSettingsSection";
+import { AdminProfileSection } from "../../components/Admin/sections/AdminProfileSection";
+// import { MessagesSection } from "../../components/Admin/sections/MessagesSection";
 
 // Import types
 import type { AdminTab, User, Deposit, Withdrawal, Trade, VerificationRequest, UpgradeRequest, Message } from "../../types/admin";
@@ -207,18 +209,50 @@ export default function AdminDashboard() {
     });
 
     // Messages query
-    const { data: messages = [], isLoading: messagesLoading } = useQuery({
-        queryKey: ['admin-messages'],
+    // const { data: messages = [], isLoading: messagesLoading } = useQuery({
+    //     queryKey: ['admin-messages'],
+    //     queryFn: async () => {
+    //         console.log('🔄 Fetching admin messages...');
+    //         try {
+    //             return await fetchJson('/api/admin/messages');
+    //         } catch (error) {
+    //             console.error('❌ Admin messages fetch failed:', error);
+    //             throw error;
+    //         }
+    //     },
+    //     enabled: activeTab === 'messages',
+    // });
+
+    // Admin profile query
+    const { data: adminProfile, isLoading: profileLoading } = useQuery({
+        queryKey: ['admin-profile'],
         queryFn: async () => {
-            console.log('🔄 Fetching admin messages...');
+            console.log('🔄 Fetching admin profile...');
             try {
-                return await fetchJson('/api/admin/messages');
+                return await fetchJson('/api/admin/profile');
             } catch (error) {
-                console.error('❌ Admin messages fetch failed:', error);
+                console.error('❌ Admin profile fetch failed:', error);
                 throw error;
             }
         },
-        enabled: activeTab === 'messages',
+        enabled: activeTab === 'profile',
+    });
+
+    // Deposit settings query
+    const { data: depositSettings, isLoading: depositSettingsLoading } = useQuery({
+        queryKey: ['admin-deposit-settings'],
+        queryFn: async () => {
+            console.log('🔄 Fetching admin deposit settings...');
+            try {
+                const response = await fetchJson('/api/admin/deposit-settings');
+                console.log('📥 Deposit settings received:', response);
+                return response?.data || response;
+            } catch (error) {
+                console.error('❌ Admin deposit settings fetch failed:', error);
+                throw error;
+            }
+        },
+        enabled: activeTab === 'settings',
     });
 
     // Mutations for CRUD operations
@@ -262,8 +296,12 @@ export default function AdminDashboard() {
                 body: JSON.stringify(updates),
             }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-withdrawals'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-withdrawals'], refetchActive: true });
             queryClient.invalidateQueries({ queryKey: ['admin-summary'] });
+        },
+        onError: (error: any) => {
+            console.error('Update withdrawal mutation failed:', error);
+            alert('Failed to update withdrawal: ' + (error?.message || 'Unknown error'));
         },
     });
 
@@ -336,25 +374,47 @@ export default function AdminDashboard() {
         },
     });
 
-    const sendMessageMutation = useMutation({
-        mutationFn: (message: Partial<Message>) =>
-            fetchJson('/api/admin/messages', {
-                method: 'POST',
-                body: JSON.stringify(message),
+    // const sendMessageMutation = useMutation({
+    //     mutationFn: (message: Partial<Message>) =>
+    //         fetchJson('/api/admin/messages', {
+    //             method: 'POST',
+    //             body: JSON.stringify(message),
+    //         }),
+    //     onSuccess: () => {
+    //         queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+    //     },
+    // });
+
+    // const updateMessageMutation = useMutation({
+    //     mutationFn: ({ id, status }: { id: string; status: 'completed' | 'pending' }) =>
+    //         fetchJson(`/api/admin/messages/${id}`, {
+    //             method: 'PATCH',
+    //             body: JSON.stringify({ status }),
+    //         }),
+    //     onSuccess: () => {
+    //         queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+    //     },
+    // });
+
+    const updateDepositSettingsMutation = useMutation({
+        mutationFn: (settings: any) =>
+            fetchJson('/api/admin/deposit-settings', {
+                method: 'PUT',
+                body: JSON.stringify(settings),
             }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-deposit-settings'] });
         },
     });
 
-    const updateMessageMutation = useMutation({
-        mutationFn: ({ id, status }: { id: string; status: 'completed' | 'pending' }) =>
-            fetchJson(`/api/admin/messages/${id}`, {
+    const updateAdminProfileMutation = useMutation({
+        mutationFn: (updates: any) =>
+            fetchJson('/api/admin/profile', {
                 method: 'PATCH',
-                body: JSON.stringify({ status }),
+                body: JSON.stringify(updates),
             }),
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-messages'] });
+            queryClient.invalidateQueries({ queryKey: ['admin-profile'] });
         },
     });
 
@@ -551,31 +611,67 @@ export default function AdminDashboard() {
                     />
                 );
 
-            case 'messages':
+            // case 'messages':
+            //     return (
+            //         <MessagesSection
+            //             users={users}
+            //             messages={messages}
+            //             isLoading={messagesLoading}
+            //             onRefresh={() => queryClient.invalidateQueries({ queryKey: ['admin-messages'] })}
+            //             onSend={async (message) => {
+            //                 try {
+            //                     await sendMessageMutation.mutateAsync(message);
+            //                     return true;
+            //                 } catch (error) {
+            //                     console.error('Failed to send message:', error);
+            //                     return false;
+            //                 }
+            //             }}
+            //             onMarkComplete={async (id) => {
+            //                 try {
+            //                     await updateMessageMutation.mutateAsync({ id, status: 'completed' });
+            //                     return true;
+            //                 } catch (error) {
+            //                     console.error('Failed to complete message:', error);
+            //                     return false;
+            //                 }
+            //             }}
+            //         />
+            //     );
+
+            case 'profile':
                 return (
-                    <MessagesSection
-                        users={users}
-                        messages={messages}
-                        isLoading={messagesLoading}
-                        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['admin-messages'] })}
-                        onSend={async (message) => {
+                    <AdminProfileSection
+                        profile={adminProfile}
+                        loading={profileLoading}
+                        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['admin-profile'] })}
+                        onUpdate={async (updates) => {
                             try {
-                                await sendMessageMutation.mutateAsync(message);
+                                await updateAdminProfileMutation.mutateAsync(updates);
                                 return true;
                             } catch (error) {
-                                console.error('Failed to send message:', error);
+                                console.error('Failed to update admin profile:', error);
                                 return false;
                             }
                         }}
-                        onMarkComplete={async (id) => {
+                    />
+                );
+
+            case 'settings':
+                return (
+                    <DepositSettingsSection
+                        settings={depositSettings}
+                        onRefresh={() => queryClient.invalidateQueries({ queryKey: ['admin-deposit-settings'] })}
+                        onUpdate={async (settings) => {
                             try {
-                                await updateMessageMutation.mutateAsync({ id, status: 'completed' });
+                                await updateDepositSettingsMutation.mutateAsync(settings);
                                 return true;
                             } catch (error) {
-                                console.error('Failed to complete message:', error);
+                                console.error('Failed to update deposit settings:', error);
                                 return false;
                             }
                         }}
+                        loading={depositSettingsLoading}
                     />
                 );
 
@@ -595,11 +691,13 @@ export default function AdminDashboard() {
         const titles = {
             overview: 'Dashboard Overview',
             users: 'User Management',
+            profile: 'Admin Profile',
             deposits: 'Deposit Requests',
             withdrawals: 'Withdrawal Requests',
             trades: 'Trade Management',
             verifications: 'KYC Verifications',
             upgrades: 'Upgrade Requests',
+            settings: 'Deposit Settings',
             messages: 'Messages & Communications'
         };
         return titles[tab] || 'Admin Dashboard';

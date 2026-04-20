@@ -240,7 +240,7 @@ const Signup = () => {
                     // Auto-fill OTP for testing (comment out in production)
                     setOtp(data.devOtp)
                 }
-                setOtp('')
+                setOtp(otp => otp)
                 setShowOtpModal(true)
             } else {
                 setFailureMessage(data.message || 'Failed to send OTP. Please try again.')
@@ -794,7 +794,7 @@ const Signup = () => {
                                 <input
                                     type="text"
                                     value={otp}
-                                    autoComplete='off'
+                                    // autoComplete='off'
                                     inputMode='numeric'
                                     pattern='[0-9]*'
                                     onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}

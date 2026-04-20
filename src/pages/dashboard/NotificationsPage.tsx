@@ -82,10 +82,10 @@ const NotificationsPageContent: React.FC = () => {
   };
 
   const typeColors = {
-    alert: "text-red-600 bg-red-50 border-red-200",
-    info: "text-blue-600 bg-blue-50 border-blue-200",
-    success: "text-green-600 bg-green-50 border-green-200",
-    warning: "text-yellow-600 bg-yellow-50 border-yellow-200",
+    alert: "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-900/20 dark:border-red-700",
+    info: "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-300 dark:bg-blue-900/20 dark:border-blue-700",
+    success: "text-green-600 bg-green-50 border-green-200 dark:text-green-300 dark:bg-green-900/20 dark:border-green-700",
+    warning: "text-yellow-600 bg-yellow-50 border-yellow-200 dark:text-yellow-300 dark:bg-yellow-900/20 dark:border-yellow-700",
   };
 
   const timeAgo = (date: Date) => {
@@ -105,8 +105,8 @@ const NotificationsPageContent: React.FC = () => {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>
-          <p className="text-gray-600 mt-2">Stay updated with your account activity</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Notifications</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Stay updated with your account activity</p>
         </div>
         {notifications.some((n) => !n.read) && (
           <button
@@ -127,7 +127,7 @@ const NotificationsPageContent: React.FC = () => {
       /> */}
 
       {/* Filter Tabs */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-4">
         <div className="flex gap-2">
           {filterTabs.map((tab) => (
             <button
@@ -136,7 +136,7 @@ const NotificationsPageContent: React.FC = () => {
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 filter === tab.key
                   ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                  : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
               }`}
             >
               {tab.label}
@@ -153,9 +153,9 @@ const NotificationsPageContent: React.FC = () => {
       {/* Notifications List */}
       <div className="space-y-3">
         {filteredNotifications.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-12 text-center">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-12 text-center">
             <svg
-              className="w-12 h-12 text-gray-300 mx-auto mb-3"
+              className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -167,7 +167,7 @@ const NotificationsPageContent: React.FC = () => {
                 d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
               />
             </svg>
-            <p className="text-gray-500 font-medium">
+            <p className="text-gray-500 dark:text-gray-400 font-medium">
               {filter === "unread"
                 ? "No unread notifications"
                 : "No notifications"}
@@ -186,17 +186,17 @@ const NotificationsPageContent: React.FC = () => {
                   <span className="text-2xl mt-1">{notification.icon}</span>
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <h3 className="font-bold text-gray-900">
+                      <h3 className="font-bold text-gray-900 dark:text-white">
                         {notification.title}
                       </h3>
                       {!notification.read && (
                         <span className="w-2 h-2 bg-current rounded-full" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-700 mt-1">
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">
                       {notification.message}
                     </p>
-                    <p className="text-xs text-gray-600 mt-2">
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
                       {timeAgo(new Date(notification.timestamp))}
                     </p>
                   </div>
@@ -207,7 +207,7 @@ const NotificationsPageContent: React.FC = () => {
                   {!notification.read && (
                     <button
                       onClick={() => markAsRead(notification.id)}
-                      className="p-2 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                      className="p-2 hover:bg-white dark:hover:bg-gray-700 hover:bg-opacity-50 rounded transition-colors"
                       title="Mark as read"
                     >
                       <svg
@@ -227,7 +227,7 @@ const NotificationsPageContent: React.FC = () => {
                   )}
                   <button
                     onClick={() => deleteNotification(notification.id)}
-                    className="p-2 hover:bg-white hover:bg-opacity-50 rounded transition-colors"
+                    className="p-2 hover:bg-white dark:hover:bg-gray-700 hover:bg-opacity-50 rounded transition-colors"
                     title="Delete"
                   >
                     <svg
@@ -252,8 +252,8 @@ const NotificationsPageContent: React.FC = () => {
       </div>
 
       {/* Notification Settings */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Notification Preferences
         </h2>
         <div className="space-y-3">
@@ -266,8 +266,8 @@ const NotificationsPageContent: React.FC = () => {
             "Marketing emails",
           ].map((pref, idx) => (
             <div key={idx} className="flex items-center justify-between">
-              <span className="text-gray-700">{pref}</span>
-              <input type="checkbox" defaultChecked className="w-5 h-5" />
+              <span className="text-gray-700 dark:text-gray-300">{pref}</span>
+              <input type="checkbox" defaultChecked className="w-5 h-5 dark:accent-purple-500" />
             </div>
           ))}
         </div>

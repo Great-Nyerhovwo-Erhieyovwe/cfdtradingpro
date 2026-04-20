@@ -85,7 +85,7 @@ export const Dashboard: React.FC = () => {
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading your dashboard...</p>
+            <p className="text-gray-600 dark:text-gray-300">Loading your dashboard...</p>
           </div>
         </div>
       </DashboardLayout>
@@ -97,9 +97,9 @@ export const Dashboard: React.FC = () => {
   if (error) {
     return (
       <DashboardLayout notifications={transformedNotifications} user={displayUser} onLogout={handleLogout}>
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-          <p className="text-red-600 font-medium">Error loading dashboard</p>
-          <p className="text-red-500 text-sm mt-2">{error}</p>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+          <p className="text-red-600 dark:text-red-400 font-medium">Error loading dashboard</p>
+          <p className="text-red-500 dark:text-red-400 text-sm mt-2">{error}</p>
           <button
             onClick={() => window.location.reload()}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -121,7 +121,7 @@ export const Dashboard: React.FC = () => {
     {/* <h1 className="text-2xl sm:text-3xl font-bold text-gray-900"> */}
 
     {/* 🟢 Changed → smaller on mobile */}
-    <h1 className="text-lg sm:text-3xl font-bold text-gray-900 whitespace-nowrap">
+    <h1 className="text-lg sm:text-3xl font-bold text-gray-900 dark:text-white whitespace-nowrap">
       {getGreeting()}, {displayUser.name}!
     </h1>
 
@@ -144,7 +144,7 @@ export const Dashboard: React.FC = () => {
       </span>
     )}
   </div>
-        <p className="text-sm sm:text-base text-gray-600 mt-2">Here's your account overview and recent activity</p>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-2">Here's your account overview and recent activity</p>
       </div>
 
       {/* Metrics Grid */}
@@ -190,8 +190,8 @@ export const Dashboard: React.FC = () => {
         {/* Quick Stats */}
         <div className="space-y-4 sm:space-y-6">
           {/* Portfolio Distribution */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Portfolio Distribution
             </h3>
             <div className="space-y-3">
@@ -207,10 +207,10 @@ export const Dashboard: React.FC = () => {
                   return (
                     <div key={position.symbol}>
                       <div className="flex justify-between items-center mb-2">
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                           {position.symbol}
                         </span>
-                        <span className="text-sm font-medium text-gray-900">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {percentage.toFixed(1)}%
                         </span>
                       </div>
@@ -224,31 +224,31 @@ export const Dashboard: React.FC = () => {
                   );
                 })
               ) : (
-                <p className="text-sm text-gray-500">No positions yet</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">No positions yet</p>
               )}
             </div>
           </div>
 
           {/* Performance Summary */}
-          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
               Performance
             </h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">ROI</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">ROI</span>
                 <span className="text-sm font-bold text-green-600">
                   +{(stats?.roi || 0)}%
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Monthly Profit</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Monthly Profit</span>
                 <span className="text-sm font-bold text-green-600">
                   {formatMoney(stats?.monthlyProfit || 0, userCurrency)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Active Trades</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Active Trades</span>
                 <span className="text-sm font-bold text-blue-600">
                   {stats?.activeTradesCount || 0}
                 </span>

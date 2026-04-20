@@ -20,6 +20,7 @@ import {
     getDashboardStats,
     updateUserSettings
 } from "../controllers/dashboardController.js";
+import { getDepositSettings } from "../controllers/adminController.js";
 import { authenticate } from "../middlewares/authenticate.js";
 
 const router = express.Router();
@@ -100,6 +101,16 @@ router.get("/notifications", getNotifications);
  * Example: PATCH /api/dashboard/notifications/notif123/read
  */
 router.patch("/notifications/:notificationId/read", markNotificationAsRead);
+
+// ============================================
+// DEPOSIT SETTINGS ENDPOINTS
+// ============================================
+
+/**
+ * GET /api/dashboard/deposit-settings
+ * Fetch global deposit method settings for display to users
+ */
+router.get("/deposit-settings", getDepositSettings);
 
 // ============================================
 // SETTINGS ENDPOINTS

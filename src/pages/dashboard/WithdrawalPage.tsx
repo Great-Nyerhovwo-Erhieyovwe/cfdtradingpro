@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
+import { useAuthStatus } from "../../hooks/useAuth";
 
 const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -31,6 +32,8 @@ const formatCurrency = (value: any, currencyCode: string = "USD") => {
 };
 
 const WithdrawalPageContent: React.FC = () => {
+  const { isFrozen } = useAuthStatus();
+
   // STATE
   const [selectedMethod, setSelectedMethod] = useState<string>("bank");
   const [amount, setAmount] = useState<string>("");
@@ -79,17 +82,17 @@ const WithdrawalPageContent: React.FC = () => {
   // };
 
 
-  const planWithdrawalLimits: Record<string, { min: number; max: number; }> = {
-    free: { min: 500, max: 5000 },
-    mini: { min: 500, max: 5000 },
-    standard: { min: 1000, max: 50000 },
-    pro: { min: 5000, max: 500000 },
-    premium: { min: 10000, max: Infinity }, // Unlimited
+  const planWithdrawalLimits: Record<string, { min: number; max: number; frequencyDays: number; }> = {
+    free: { min: 500, max: 5000, frequencyDays: 7 },
+    mini: { min: 500, max: 5000, frequencyDays: 7 },
+    standard: { min: 1000, max: 50000, frequencyDays: 3 },
+    pro: { min: 5000, max: 500000, frequencyDays: 1 },
+    premium: { min: 10000, max: Infinity, frequencyDays: 1 },
   };
 
   const [userPlan, setUserPlan] = useState<string>("free");
   const [currency, setCurrency] = useState<string>("USD");
-  const [withdrawalLimits, setWithdrawalLimits] = useState<{ min: number; max: number; }>({ min: 500, max: 5000 });
+  const [withdrawalLimits, setWithdrawalLimits] = useState<{ min: number; max: number; frequencyDays: number; }>({ min: 500, max: 5000, frequencyDays: 7 });
   // const [rate, setRate] = useState<number>(1);
 
   console.log('User plan :', userPlan);
@@ -123,19 +126,20 @@ const WithdrawalPageContent: React.FC = () => {
 
         setCurrency(user.currency || "USD");
 
+        const planKey = portfolio.upgradeLevel || user.upgradeLevel || "free";
         setAvailableBalance(portfolio.totalBalance || portfolio.balanceUsd || 0);
-        setUserPlan(portfolio.accountLevel || "free");
+        setUserPlan(planKey);
 
-        // Set withdrawal limits from user data (updated on upgrade) or use plan defaults
+        const defaultPlanLimits = planWithdrawalLimits[planKey] || planWithdrawalLimits.free;
         if (user.withdrawal_min_usd !== undefined && user.withdrawal_max_usd !== undefined) {
           setWithdrawalLimits({
             min: user.withdrawal_min_usd,
-            max: user.withdrawal_max_usd
+            max: user.withdrawal_max_usd,
+            frequencyDays: defaultPlanLimits.frequencyDays,
           });
         } else {
           // Fallback to plan-based limits
-          const planLimits = planWithdrawalLimits[portfolio.accountLevel || "free"];
-          setWithdrawalLimits(planLimits || { min: 500, max: 5000 });
+          setWithdrawalLimits(defaultPlanLimits);
         }
 
         // if (currency !== "USD" && rates[currency]) {
@@ -196,12 +200,13 @@ const WithdrawalPageContent: React.FC = () => {
       return { can: false, reason: "Please enter a wallet address" };
     }
     
-    // Check weekly frequency
+    const frequencyDays = limits.frequencyDays || 7;
+
     if (lastWithdrawalDate) {
-      const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-      if (lastWithdrawalDate > oneWeekAgo) {
-        const daysLeft = Math.ceil((7 - (Date.now() - lastWithdrawalDate.getTime()) / (24 * 60 * 60 * 1000)));
-        return { can: false, reason: `You can withdraw again in ${daysLeft} days` };
+      const cutoff = new Date(Date.now() - frequencyDays * 24 * 60 * 60 * 1000);
+      if (lastWithdrawalDate > cutoff) {
+        const daysLeft = Math.ceil((frequencyDays - (Date.now() - lastWithdrawalDate.getTime()) / (24 * 60 * 60 * 1000)));
+        return { can: false, reason: `You can withdraw again in ${daysLeft} day${daysLeft === 1 ? '' : 's'}` };
       }
     }
 
@@ -211,6 +216,17 @@ const WithdrawalPageContent: React.FC = () => {
   // SUBMIT
   const handleSubmitWithdrawal = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Check if account is frozen
+    if (isFrozen) {
+      setModal({
+        isOpen: true,
+        title: "Account Frozen",
+        message: "Your account is frozen and you cannot make withdrawals. Please contact support.",
+        type: "error"
+      });
+      return;
+    }
 
     const validation = canWithdraw();
     if (!validation.can) {
@@ -298,6 +314,19 @@ const WithdrawalPageContent: React.FC = () => {
         <p className="text-gray-600 mt-2">Withdraw funds from your trading account</p>
       </div>
 
+      {/* Frozen Account Warning */}
+      {isFrozen && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <span className="text-yellow-600 text-lg">⚠️</span>
+            <p className="text-yellow-800 font-medium">Account Frozen</p>
+          </div>
+          <p className="text-yellow-700 text-sm mt-1">
+            Your account is currently frozen. You cannot make withdrawals. Please contact support for assistance.
+          </p>
+        </div>
+      )}
+
       <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-6">
         <p className="text-sm text-gray-600 mb-2">Available Balance</p>
         <p className="text-4xl font-bold text-green-600">
@@ -367,7 +396,7 @@ const WithdrawalPageContent: React.FC = () => {
             </div>
             <p className="text-xs text-gray-500 mt-2">
               Min: {currency} {(withdrawalLimits.min).toLocaleString()} |
-              Max: {currency} {(withdrawalLimits.max).toLocaleString()} daily | Once per week
+              Max: {currency} {(withdrawalLimits.max).toLocaleString()} daily | {withdrawalLimits.frequencyDays === 1 ? 'Once per day' : `Once every ${withdrawalLimits.frequencyDays} days`}
             </p>
           </div>
 
@@ -469,10 +498,10 @@ const WithdrawalPageContent: React.FC = () => {
 
           <button
             type="submit"
-            disabled={!amount || isSubmitting}
+            disabled={!amount || isSubmitting || isFrozen}
             className="w-full px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSubmitting ? "Submitting..." : "Request Withdrawal"}
+            {isFrozen ? "Account Frozen - Contact Support" : isSubmitting ? "Submitting..." : "Request Withdrawal"}
           </button>
         </form>
       </div>

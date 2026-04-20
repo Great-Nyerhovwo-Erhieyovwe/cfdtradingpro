@@ -68,26 +68,26 @@ export const DashboardSidebar: React.FC = () => {
 
       {/* Sidebar */}
       <aside
-        className={`fixed left-0 top-0 h-screen w-64 bg-white border-r border-gray-200 shadow-lg transform transition-transform duration-300 ease-in-out z-40 lg:static lg:translate-x-0 overflow-y-auto ${
+        className={`fixed left-0 top-0 h-screen w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 shadow-lg transform transition-transform duration-300 ease-in-out z-40 lg:static lg:translate-x-0 overflow-y-auto ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Sidebar Header */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700 dark:bg-gray-800">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">CFD</span>
             </div>
             <div>
-              <h1 className="text-lg font-bold text-gray-900">CFD Trading Pro</h1>
-              <p className="text-xs text-gray-500">Trading Platform</p>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">CFD Trading Pro</h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Trading Platform</p> 
             </div>
           </div>
 
           {/* Close button for mobile */}
           <button
             onClick={() => setIsOpen(false)}
-            className="lg:hidden absolute top-4 right-4 p-1 text-gray-600 hover:text-gray-900"
+            className="lg:hidden absolute top-4 right-4 p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
           >
             <FiX size={24} />
           </button>
@@ -103,12 +103,12 @@ export const DashboardSidebar: React.FC = () => {
                 onClick={() => setIsOpen(false)}
                 className={`flex items-center justify-between px-4 py-3 rounded-lg transition-colors ${
                   isActive(link.path)
-                    ? "bg-blue-50 text-blue-600 font-medium border-l-4 border-blue-600"
-                    : "text-gray-700 hover:bg-gray-100 font-normal"
+                    ? "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-medium border-l-4 border-blue-600"
+                    : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 font-normal"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-gray-600 hover:text-gray-900">{link.icon}</span>
+                  <span className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">{link.icon}</span>
                   <span className="text-sm">{link.name}</span>
                 </div>
                 {link.badge && (
@@ -122,8 +122,8 @@ export const DashboardSidebar: React.FC = () => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 bg-white">
-          <button className="w-full px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors" onClick={() => navigate('https://t.me/')}>
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 dark:bg-gray-900">
+          <button className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors" onClick={() => navigate('https://t.me/')}>
             Need Help?
           </button>
         </div>

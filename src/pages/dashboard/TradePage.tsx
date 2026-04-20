@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
+import { useAuthStatus } from "../../hooks/useAuth";
 
 const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -44,6 +45,9 @@ const TradePageContent: React.FC = () => {
 
   const [recentTrades, setRecentTrades] = useState<Array<any>>([]);
 
+  // Auth status hook
+  const { isFrozen } = useAuthStatus();
+
   // ASSETS
   const assets = ["EUR/USD", "GBP/USD", "BTC/USD", "ETH/USD", "GOLD", "OIL"];
 
@@ -53,7 +57,6 @@ const TradePageContent: React.FC = () => {
       const token = localStorage.getItem("token");
       if (!token) {
         setIsLoading(false);
-        window.location.href = '/login';
         return;
       }
 
@@ -177,13 +180,31 @@ const TradePageContent: React.FC = () => {
       <Modal isOpen={modal.isOpen} title={modal.title} message={modal.message} type={modal.type} onClose={() => setModal({ ...modal, isOpen: false })} />
 
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Execute Trade</h1>
-        <p className="text-gray-600 mt-2">Trade currency pairs, commodities, and cryptocurrencies</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Execute Trade</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Trade currency pairs, commodities, and cryptocurrencies</p>
       </div>
 
-      <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-6">
-        <p className="text-sm text-gray-600 mb-2">Available Balance</p>
-        <p className="text-4xl font-bold text-purple-600">
+      {isFrozen && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Account Frozen</h3>
+              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                <p>Your account is currently frozen. You cannot execute trades until your account is unfrozen by an administrator.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border border-purple-200 dark:border-purple-700 rounded-lg p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Available Balance</p>
+        <p className="text-4xl font-bold text-purple-600 dark:text-purple-400">
           {new Intl.NumberFormat(undefined, {
             style: "currency",
             currency,
@@ -193,17 +214,17 @@ const TradePageContent: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Trade Form */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">New Trade</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">New Trade</h2>
 
           <form onSubmit={handleSubmitTrade} className="space-y-4">
             {/* Asset Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Asset</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Asset</label>
               <select
                 value={asset}
                 onChange={(e) => setAsset(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 {assets.map((a) => (
                   <option key={a} value={a}>{a}</option>
@@ -213,13 +234,13 @@ const TradePageContent: React.FC = () => {
 
             {/* Trade Type */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Trade Type</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trade Type</label>
               <div className="flex gap-4">
                 <button
                   type="button"
                   onClick={() => setType("buy")}
                   className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                    type === "buy" ? "bg-green-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    type === "buy" ? "bg-green-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
                 >
                   Buy
@@ -228,7 +249,7 @@ const TradePageContent: React.FC = () => {
                   type="button"
                   onClick={() => setType("sell")}
                   className={`flex-1 py-2 rounded-lg font-medium transition-all ${
-                    type === "sell" ? "bg-red-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    type === "sell" ? "bg-red-600 text-white" : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                   }`}
                 >
                   Sell
@@ -238,23 +259,23 @@ const TradePageContent: React.FC = () => {
 
             {/* Amount */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Trade Amount</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Trade Amount</label>
               <div className="flex items-center gap-2">
-                <span className="text-gray-600 font-medium">{currency}</span>
+                <span className="text-gray-600 dark:text-gray-400 font-medium">{currency}</span>
                 <input
                   type="number"
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   placeholder="0.00"
                   step="0.01"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 />
               </div>
             </div>
 
             {/* Leverage */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Leverage: {leverage}x</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Leverage: {leverage}x</label>
               <input
                 type="range"
                 min="1"
@@ -267,7 +288,7 @@ const TradePageContent: React.FC = () => {
 
             {/* Summary */}
             {amount && (
-              <div className="p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-lg">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
                     <span>Trade Amount:</span>
@@ -277,9 +298,9 @@ const TradePageContent: React.FC = () => {
                     <span>Leverage:</span>
                     <span className="font-medium">{leverage}x</span>
                   </div>
-                  <div className="border-t border-purple-200 pt-2 flex justify-between font-bold">
+                  <div className="border-t border-purple-200 dark:border-purple-600 pt-2 flex justify-between font-bold">
                     <span>Deduct from Balance:</span>
-                    <span className="text-red-600">
+                    <span className="text-red-600 dark:text-red-300">
                       {formatCurrency(amount, currency)}
                     </span>
                   </div>
@@ -289,35 +310,35 @@ const TradePageContent: React.FC = () => {
 
             <button
               type="submit"
-              disabled={!amount || isSubmitting}
+              disabled={!amount || isSubmitting || isFrozen}
               className="w-full px-6 py-3 bg-purple-600 text-white font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Executing..." : "Execute Trade"}
+              {isSubmitting ? "Executing..." : isFrozen ? "Account Frozen" : "Execute Trade"}
             </button>
           </form>
         </div>
 
         {/* Active Trades */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Your Trades</h2>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Your Trades</h2>
           <div className="space-y-3">
             {recentTrades.length > 0 ? (
               recentTrades.map((trade) => (
-                <div key={trade.id} className="p-3 border border-gray-200 rounded-lg">
+                <div key={trade.id} className="p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="font-medium text-gray-900">
+                      <p className="font-medium text-gray-900 dark:text-white">
                         {trade.type.toUpperCase()} {trade.asset}
                       </p>
-                      <p className="text-sm text-gray-600">{trade.amount}</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{trade.amount}</p>
                     </div>
                     <span
                       className={`px-3 py-1 rounded-full text-sm font-medium ${
                         trade.status === "closed"
                           ? trade.result === "gain"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
+                            ? "bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400"
+                            : "bg-red-100 dark:bg-red-900/20 text-red-800 dark:text-red-400"
+                          : "bg-yellow-100 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-400"
                       }`}
                     >
                       {trade.status === "closed"
@@ -330,7 +351,7 @@ const TradePageContent: React.FC = () => {
                 </div>
               ))
             ) : (
-              <p className="text-gray-600 text-center py-4">No trades yet</p>
+              <p className="text-gray-600 dark:text-gray-400 text-center py-4">No trades yet</p>
             )}
           </div>
         </div>
@@ -347,7 +368,6 @@ export const TradePage: React.FC = () => {
     const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
-      window.location.href = '/login';
       return;
     }
 

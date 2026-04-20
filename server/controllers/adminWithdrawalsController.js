@@ -110,16 +110,17 @@ export async function updateWithdrawal(req, res) {
                 const [userRows] = await db.query('SELECT balanceUsd FROM users WHERE id = ? LIMIT 1', [transaction.userId]);
                 const user = userRows[0];
 
-                if (!user || user.balanceUsd < transaction.amount) {
+                const amountToDebit = Math.abs(transaction.amount);
+                if (!user || user.balanceUsd < amountToDebit) {
                     await db.query('ROLLBACK');
                     return res.status(400).json({ message: 'Insufficient funds for withdrawal' });
                 }
 
                 await db.query(
                     'UPDATE users SET balanceUsd = balanceUsd - ? WHERE id = ?',
-                    [transaction.amount, transaction.userId]
+                    [amountToDebit, transaction.userId]
                 );
-                console.log(`UpdateWithdrawal: Debited ${transaction.amount} from user ${transaction.userId}`);
+                console.log(`UpdateWithdrawal: Debited ${amountToDebit} from user ${transaction.userId}`);
             }
 
             await db.query('COMMIT');

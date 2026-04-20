@@ -56,6 +56,29 @@ const DepositPageContent: React.FC = () => {
   // Deposit history
   const [recentDeposits, setRecentDeposits] = useState<Array<any>>([]);
 
+  // Deposit settings
+  const [depositSettings, setDepositSettings] = useState<{
+    bank: {
+      accountNumber: string;
+      accountHolder: string;
+      routingNumber: string;
+      bankName: string;
+    };
+    crypto: {
+      address: string;
+    };
+  }>({
+    bank: {
+      accountNumber: "Loading...",
+      accountHolder: "Loading...",
+      routingNumber: "Loading...",
+      bankName: "Loading...",
+    },
+    crypto: {
+      address: "Loading...",
+    },
+  });
+
   // ============================================================================
   // DEPOSIT METHODS
   // ============================================================================
@@ -109,8 +132,8 @@ const DepositPageContent: React.FC = () => {
       }
 
       try {
-        // Fetch portfolio and deposit history in parallel
-        const [portfolioRes, depositsRes, userRes] = await Promise.all([
+        // Fetch portfolio, deposit history, user, and deposit settings in parallel
+        const [portfolioRes, depositsRes, userRes, settingsRes] = await Promise.all([
           fetch(`${backendUrl}/api/dashboard/portfolio`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
@@ -120,11 +143,15 @@ const DepositPageContent: React.FC = () => {
           fetch(`${backendUrl}/api/dashboard/user`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
+          fetch(`${backendUrl}/api/dashboard/deposit-settings`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
         ]);
 
         const portfolio = await portfolioRes.json();
         const deposits = await depositsRes.json();
         const user = await userRes.json();
+        const settings = await settingsRes.json();
 
         setCurrency(user.currency || "USD");
 
@@ -137,6 +164,10 @@ const DepositPageContent: React.FC = () => {
               new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
           );
           setRecentDeposits(sorted.slice(0, 5));
+        }
+
+        if (settings.success && settings.data) {
+          setDepositSettings(settings.data);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -274,23 +305,23 @@ const DepositPageContent: React.FC = () => {
 
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Deposit Funds</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Deposit Funds</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
           Add funds to your trading account and start investing
         </p>
       </div>
 
       {/* Available Balance */}
-      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6">
-        <p className="text-sm text-gray-600 mb-2">Available Balance</p>
-        <p className="text-4xl font-bold text-blue-600">
+      <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-lg p-6">
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Available Balance</p>
+        <p className="text-4xl font-bold text-blue-600 dark:text-blue-300">
           {formatCurrency(availableBalance, currency)}
         </p>
       </div>
 
       {/* Deposit Methods */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Select Deposit Method
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -300,10 +331,10 @@ const DepositPageContent: React.FC = () => {
               onClick={() => method.enabled && setSelectedMethod(method.id)}
               disabled={!method.enabled}
               className={`p-4 rounded-lg border-2 transition-all text-left ${!method.enabled
-                ? "border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed"
+                ? "border-gray-200 bg-gray-50 dark:bg-gray-700 opacity-60 cursor-not-allowed"
                 : selectedMethod === method.id
-                  ? "border-blue-600 bg-blue-50 cursor-pointer"
-                  : "border-gray-200 hover:border-gray-300 bg-white cursor-pointer"
+                  ? "border-blue-600 bg-blue-50 dark:bg-blue-900/30 cursor-pointer"
+                  : "border-gray-200 hover:border-gray-300 bg-white dark:bg-gray-700 dark:hover:border-gray-600 cursor-pointer"
                 }`}
             >
               <div className="flex items-start justify-between mb-2">
@@ -331,19 +362,19 @@ const DepositPageContent: React.FC = () => {
       </div>
 
       {/* Deposit Form */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           {selectedMethodData?.name}
         </h2>
 
         <form onSubmit={handleSubmitDeposit} className="space-y-4">
           {/* Amount Input */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Deposit Amount
             </label>
             <div className="flex items-center gap-2">
-              <span className="text-gray-600 font-medium">{currency}</span>
+              <span className="text-gray-600 dark:text-gray-300 font-medium">{currency}</span>
               <input
                 type="number"
                 value={amount}
@@ -351,41 +382,41 @@ const DepositPageContent: React.FC = () => {
                 placeholder="0.00"
                 min="50"
                 step="0.01"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
-            <p className="text-xs text-gray-500 mt-2">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
               Minimum deposit: {currency}50
             </p>
           </div>
 
           {/* Fee Information */}
           {amount && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-gray-700">Deposit Amount:</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-gray-700 dark:text-gray-300">Deposit Amount:</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {formatCurrency(amount, currency)}
                   </span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-700">Fee ({selectedMethodData?.fee}):</span>
-                  <span className="font-medium text-gray-900">
+                  <span className="text-gray-700 dark:text-gray-300">Fee ({selectedMethodData?.fee}):</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
                     {formatCurrency(
                       parseCurrencyValue(amount || "0") * (parseFee(selectedMethodData?.fee) / 100),
                       currency
                     )}
                   </span>
                 </div>
-                <div className="border-t border-blue-200 pt-2 flex justify-between">
-                  <span className="text-gray-700 font-medium">
+                <div className="border-t border-blue-200 dark:border-blue-700 pt-2 flex justify-between">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
                     You'll Deposit:
                   </span>
-                  <span className="font-bold text-gray-900">
+                  <span className="font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(
                       parseCurrencyValue(amount || "0") -
-                        parseCurrencyValue(amount || "0") * (parseFee(selectedMethodData?.fee) / 100),
+                      parseCurrencyValue(amount || "0") * (parseFee(selectedMethodData?.fee) / 100),
                       currency
                     )}
                   </span>
@@ -396,54 +427,48 @@ const DepositPageContent: React.FC = () => {
 
           {/* Additional Info */}
           {selectedMethod === 'bank' && (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y-3">
-              <p className="text-sm font-medium text-gray-900">Bank Account Details</p>
-              <div className="space-y-2 text-sm text-gray-600">
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Bank Account Details</p>
+              <div className="space-y-2 text-sm text-gray-600 dark:text-gray-300">
                 <div>
-                  <p className="text-xs text-gray-500">Account Number</p>
-                  <p className="font-mono text-gray-900">Unavailabe now! (Updated soon...)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Account Number</p>
+                  <p className="font-mono text-gray-900 dark:text-gray-100">{depositSettings.bank.accountNumber}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Account Holder</p>
-                  <p className="font-mono text-gray-900">Unavailabe now! (Updated soon...)</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Account Holder</p>
+                  <p className="font-mono text-gray-900 dark:text-gray-100">{depositSettings.bank.accountHolder}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Routing Number</p>
-                  <p className="font-mono text-gray-900">121000248</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Routing Number</p>
+                  <p className="font-mono text-gray-900 dark:text-gray-100">{depositSettings.bank.routingNumber}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Bank Name</p>
-                  <p className="font-mono text-gray-900">CFD Financial Bank</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Bank Name</p>
+                  <p className="font-mono text-gray-900 dark:text-gray-100">{depositSettings.bank.bankName}</p>
                 </div>
               </div>
             </div>
           )}
 
           {selectedMethod === 'crypto' && (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg space-y3">
-              <p className="text-sm font-medium text-gray-900">Wallet Address</p>
+            <div className="p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg space-y-3">
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Wallet Address</p>
               <div className="flex items-center gap-2">
-                <code className="flex-1 p-2 bg-white border border-gray-300 rounded font-mono text-xs text-gray-900">
-                  THQYgNzTYo7g5aBhhJLMc2FaA632FwZ4WK
+                <code className="flex-1 p-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded font-mono text-xs text-gray-900 dark:text-gray-100">
+                  {depositSettings.crypto.address}
                 </code>
                 <button type="button" onClick={() => {
-                  navigator.clipboard.writeText("THQYgNzTYo7g5aBhhJLMc2FaA632FwZ4WK");
+                  navigator.clipboard.writeText(depositSettings.crypto.address);
                   alert('Copied to clipboard');
                 }}
                   className="p-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                ><svg
+                  className="w-5 h-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M16 6H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 002-2v8a2 2 0 002 2z"
-                    />
+                    <path d="M16 1H4a2 2 0 00-2 2v12h2V3h12V1z" />
+                    <path d="M20 5H8a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V7a2 2 0 00-2-2z" />
                   </svg>
                 </button>
               </div>
@@ -459,7 +484,7 @@ const DepositPageContent: React.FC = () => {
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
             />
-            <label htmlFor="terms" className="text-sm text-gray-600">
+            <label htmlFor="terms" className="text-sm text-gray-600 dark:text-gray-300">
               I agree to the terms and conditions and understand that my deposit
               will be processed after admin approval
             </label>
@@ -477,8 +502,8 @@ const DepositPageContent: React.FC = () => {
       </div>
 
       {/* Recent Deposits */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
           Recent Deposits
         </h2>
         <div className="space-y-3">
@@ -486,10 +511,10 @@ const DepositPageContent: React.FC = () => {
             recentDeposits.map((deposit) => (
               <div
                 key={deposit.id}
-                className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
               >
                 <div>
-                  <p className="font-medium text-gray-900">
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
                     {formatCurrency(deposit.amount, deposit.currency || currency)} - {deposit.payment_method || deposit.paymentMethod}
                   </p>
                   <p className="text-sm text-gray-600">

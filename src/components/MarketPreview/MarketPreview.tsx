@@ -1,6 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { AssetCard } from "./AssetCard";
 import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 
 const mockAssets = [
   {
@@ -49,48 +50,82 @@ const mockAssets = [
 
 export const MarketPreview = () => {
   const navigate = useNavigate();
+  const [assets, setAssets] = useState(mockAssets);
 
-  const [assets, setAssets] = useState(mockAssets)
-  
-  console.log(assets);
-// Example: rotate first asset to the end every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setAssets((prev: any) => {
         const newAssets = [...prev];
         const first = newAssets.shift();
-        if (first) newAssets.push(first)
-        return newAssets
+        if (first) newAssets.push(first);
+        return newAssets;
       });
-    }, 5000); // 5 secs
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
+  console.log(assets);
+
   return (
-    <section className="py-8 sm:py-12 md:py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
-        <h2 className="mb-3 sm:mb-4 md:mb-6 text-center text-2xl sm:text-3xl md:text-4xl font-semibold text-white">
-          Live Market Overview
-        </h2>
-        <p className="mb-8 sm:mb-10 md:mb-12 text-center text-sm sm:text-base text-white/70 max-w-2xl mx-auto leading-relaxed px-2">
-          Stay ahead of the market with real-time data across multiple asset classes. Our platform provides instant updates and advanced analytics.
-        </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
+    <section className="relative py-12 sm:py-16 md:py-20 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-slate-850 to-slate-900/95" />
+      <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 via-transparent to-blue-500/5" />
+
+      <motion.div
+        className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 md:px-8"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+      >
+        {/* Header */}
+        <motion.div
+          className="text-center mb-12 sm:mb-16 md:mb-20"
+          initial={{ opacity: 0, y: -10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+        >
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-3 sm:mb-4">
+            Live Market
+            <span className="inline-block ml-2 bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+              Overview
+            </span>
+          </h2>
+          <p className="text-sm sm:text-base text-white/70 max-w-2xl mx-auto">
+            Real-time data across multiple asset classes with instant updates and advanced analytics
+          </p>
+        </motion.div>
+
+        {/* Assets Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8 mb-10 sm:mb-12 md:mb-16">
           {mockAssets.map((a, i) => (
             <AssetCard key={i} {...a} />
           ))}
         </div>
-        <div className="mt-8 sm:mt-10 md:mt-12 text-center">
-          <p className="text-white/60 mb-3 sm:mb-4 text-sm sm:text-base">Want to see more markets?</p>
-          <button className="bg-accent text-primary px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-medium hover:bg-accent/90 transition-colors text-sm sm:text-base" onClick={() => navigate('/markets')}>
-            View All Markets
-          </button>
-        </div>
-      </div>
-    </section>
-  )
-};
 
-// function useState(mockAssets: { name: string; symbol: string; price: string; change: number; data: number[]; }[]): [any, any] {
-//   throw new Error("Function not implemented.");
-// }
+        {/* CTA Section */}
+        <motion.div
+          className="text-center py-8 sm:py-10 md:py-12 px-4 sm:px-6 rounded-lg bg-gradient-to-r from-blue-500/10 to-cyan-500/10 border border-white/10"
+          initial={{ opacity: 0, y: 10 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2, duration: 0.6 }}
+        >
+          <p className="text-sm sm:text-base text-white/80 mb-4 sm:mb-5">
+            Want to see more markets and real-time data?
+          </p>
+          <motion.button
+            className="px-6 sm:px-8 py-2.5 sm:py-3 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 text-slate-900 font-bold text-sm sm:text-base hover:shadow-lg hover:shadow-blue-500/40 transition-all duration-300"
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => navigate('/markets')}
+          >
+            Explore All Markets
+          </motion.button>
+        </motion.div>
+      </motion.div>
+    </section>
+  );
+};

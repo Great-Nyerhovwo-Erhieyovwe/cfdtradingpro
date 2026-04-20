@@ -29,6 +29,15 @@ export interface User {
   withdrawal_max_usd?: number;
 }
 
+export interface AdminProfile {
+  id: string;
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  role: 'admin' | 'superadmin' | 'user';
+  createdAt: string;
+}
+
 export interface Deposit {
   id: string;
   userId: string | User;
@@ -178,4 +187,6 @@ export type AdminTab =
   | 'trades' 
   | 'upgrades' 
   | 'verifications' 
+  | 'settings'
+  | 'profile'
   | 'messages';

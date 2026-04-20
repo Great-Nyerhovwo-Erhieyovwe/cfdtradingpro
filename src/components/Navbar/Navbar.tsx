@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { LogoWithText } from "../Logo/ProfessionalLogo";
 
 export const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -21,165 +22,149 @@ export const Navbar = () => {
     // Function to get link styles based on active state
     const getLinkStyles = (path: string, isMobile: boolean = false) => {
         const baseStyles = isMobile
-            ? "block px-3 py-2 rounded-md text-sm sm:text-base font-medium transition-all duration-300"
-            : "px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all duration-300";
+            ? "block px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-300 w-full text-left"
+            : "px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all duration-300";
 
         const activeStyles = isActiveLink(path)
-            ? "text-accent bg-accent/10 border-b-2 border-accent"
-            : "text-white hover:text-accent hover:bg-white/5";
+            ? "text-blue-400 bg-blue-400/10 border-l-2 sm:border-l-0 sm:border-b-2 border-blue-400"
+            : "text-white/80 hover:text-white hover:bg-white/5";
 
         return `${baseStyles} ${activeStyles}`;
     };
 
+    const navLinks = [
+        { label: 'Home', path: '/' },
+        { label: 'Markets', path: '/markets' },
+        { label: 'Platform', path: '/platform' },
+        { label: 'About', path: '/about' },
+        { label: 'Contact', path: '/contact' },
+    ];
+
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-primary/95 backdrop-blur-md border-b border-white/10">
-            <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-gradient-to-b from-slate-900/95 via-slate-900/90 to-slate-900/50 backdrop-blur-xl border-b border-white/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8">
+                {/* Main navbar */}
                 <div className="flex justify-between items-center h-16 sm:h-20">
                     {/* Logo */}
                     <motion.div
-                        className="flex-shrink-0"
+                        className="flex-shrink-0 cursor-pointer"
                         whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => navigate('/')}
                     >
-                        <img src="/logo.svg" alt="CFD Trading Pro Logo" className="h-6 sm:h-8 w-auto" />
+                        <LogoWithText size="sm" animated={false} />
                     </motion.div>
 
                     {/* Desktop Menu */}
-                    <div className="hidden md:block">
-                        <div className="ml-6 lg:ml-10 flex items-center gap-1 lg:gap-4">
+                    <div className="hidden lg:flex items-center gap-0.5">
+                        {navLinks.map((link) => (
                             <motion.a
-                                href="/"
-                                className={getLinkStyles('/')}
+                                key={link.path}
+                                href={link.path}
+                                className={getLinkStyles(link.path)}
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                             >
-                                Home
+                                {link.label}
                             </motion.a>
-                            <motion.a
-                                href="/markets"
-                                className={getLinkStyles('/markets')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                Markets
-                            </motion.a>
-                            <motion.a
-                                href="/platform"
-                                className={getLinkStyles('/platform')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                Platform
-                            </motion.a>
-                            <motion.a
-                                href="/about"
-                                className={getLinkStyles('/about')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                About
-                            </motion.a>
-                            <motion.a
-                                href="/contact"
-                                className={getLinkStyles('/contact')}
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                            >
-                                Contact
-                            </motion.a>
-                        </div>
+                        ))}
                     </div>
 
-                    {/* CTA Button */}
-                    <div className="hidden md:block">
+                    {/* CTA Buttons Container */}
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        {/* Desktop Sign In Button */}
                         <motion.button
-                            className="bg-accent text-primary px-4 py-2 rounded-md font-medium text-sm hover:bg-accent/90 transition-colors"
+                            className="hidden sm:block px-4 sm:px-6 py-2 rounded-lg text-xs sm:text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
                             onClick={() => navigate('/login')}
                         >
                             Sign In
                         </motion.button>
-                    </div>
 
-                    {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center gap-2">
+                        {/* Get Started Button */}
                         <motion.button
-                            className="bg-accent text-primary px-3 py-1.5 rounded-md font-medium text-xs sm:text-sm hover:bg-accent/90 transition-colors"
+                            className="hidden sm:block px-4 sm:px-6 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 text-slate-900 text-xs sm:text-sm font-bold hover:shadow-lg hover:shadow-blue-500/50 transition-all duration-300"
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => navigate('/signup')}
+                        >
+                            Get Started
+                        </motion.button>
+
+                        {/* Mobile Get Started Button */}
+                        <motion.button
+                            className="sm:hidden px-3 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 text-slate-900 text-xs font-bold"
                             whileHover={{ scale: 1.05 }}
                             whileTap={{ scale: 0.95 }}
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate('/signup')}
                         >
-                            Sign In
+                            Start
                         </motion.button>
-                        <button
+
+                        {/* Mobile menu button */}
+                        <motion.button
                             onClick={() => setIsOpen(!isOpen)}
-                            className="text-white hover:text-accent p-2 rounded-md"
+                            className="lg:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+                            whileTap={{ scale: 0.95 }}
                         >
-                            <svg className="h-5 sm:h-6 w-5 sm:w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="h-5 w-5 sm:h-6 sm:w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 {isOpen ? (
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 ) : (
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                                 )}
                             </svg>
-                        </button>
+                        </motion.button>
                     </div>
                 </div>
 
                 {/* Mobile Menu */}
                 {isOpen && (
                     <motion.div
-                        className="md:hidden"
+                        className="lg:hidden border-t border-white/10 bg-slate-900/95 backdrop-blur"
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
                     >
-                        <div className="px-3 sm:px-4 pt-2 pb-4 space-y-1 bg-primary/95 border-t border-white/10">
-                            <motion.a
-                                href="/"
-                                className={getLinkStyles('/', true)}
-                                onClick={() => setIsOpen(false)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                Home
-                            </motion.a>
-                            <motion.a
-                                href="/markets"
-                                className={getLinkStyles('/markets', true)}
-                                onClick={() => setIsOpen(false)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                Markets
-                            </motion.a>
-                            <motion.a
-                                href="/platform"
-                                className={getLinkStyles('/platform', true)}
-                                onClick={() => setIsOpen(false)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                Platform
-                            </motion.a>
-                            <motion.a
-                                href="/about"
-                                className={getLinkStyles('/about', true)}
-                                onClick={() => setIsOpen(false)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                About
-                            </motion.a>
-                            <motion.a
-                                href="/contact"
-                                className={getLinkStyles('/contact', true)}
-                                onClick={() => setIsOpen(false)}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                            >
-                                Contact
-                            </motion.a>
+                        <div className="px-3 py-3 space-y-1">
+                            {navLinks.map((link) => (
+                                <motion.a
+                                    key={link.path}
+                                    href={link.path}
+                                    className={getLinkStyles(link.path, true)}
+                                    onClick={() => setIsOpen(false)}
+                                    whileHover={{ x: 4 }}
+                                    whileTap={{ scale: 0.98 }}
+                                >
+                                    {link.label}
+                                </motion.a>
+                            ))}
+                            
+                            {/* Mobile menu CTA buttons */}
+                            <div className="pt-3 mt-3 border-t border-white/10 space-y-2">
+                                <motion.button
+                                    className="w-full px-4 py-2.5 rounded-lg text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all duration-300"
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        navigate('/login');
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    Sign In
+                                </motion.button>
+                                <motion.button
+                                    className="w-full px-4 py-2.5 rounded-lg bg-gradient-to-r from-blue-500 to-cyan-400 text-slate-900 text-sm font-bold"
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        navigate('/signup');
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    Create Account
+                                </motion.button>
+                            </div>
                         </div>
                     </motion.div>
                 )}

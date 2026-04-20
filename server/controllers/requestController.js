@@ -142,10 +142,8 @@ async function getUserDeposits(req, res) {
     const formatted = deposits.map((d) => ({
       ...d,
       amount: formatCurrency(d.amount, currency),
+      status: d.status === 'completed' ? 'approved' : d.status === 'failed' ? 'rejected' : d.status,
     }));
-
-    // Filter deposits for current user
-    // const userDeposits = deposits.filter((d) => d.userId === userId);
 
     res.json({
       success: true,
@@ -160,6 +158,36 @@ async function getUserDeposits(req, res) {
 // ============================================================================
 // WITHDRAWAL REQUEST CONTROLLER
 // ============================================================================
+
+function getWithdrawalRulesForUser(user) {
+  const minUsd = Number(user.withdrawal_min_usd ?? 500);
+  const rawMaxUsd = user.withdrawal_max_usd === null || user.withdrawal_max_usd === undefined
+    ? 5000
+    : Number(user.withdrawal_max_usd);
+  const maxUsd = Number.isFinite(rawMaxUsd) ? rawMaxUsd : 5000;
+
+  const upgradeLevel = (user.upgradeLevel || 'free').toString().toLowerCase();
+  const frequencyDays = (() => {
+    switch (upgradeLevel) {
+      case 'standard':
+        return 3;
+      case 'pro':
+      case 'premium':
+        return 1;
+      case 'free':
+      case 'mini':
+      default:
+        return 7;
+    }
+  })();
+
+  return {
+    minUsd: Number.isFinite(minUsd) && minUsd > 0 ? minUsd : 500,
+    maxUsd,
+    frequencyDays,
+    upgradeLevel: upgradeLevel || 'free',
+  };
+}
 
 /**
  * Create a withdrawal request
@@ -181,7 +209,6 @@ async function createWithdrawal(req, res) {
     const { amount, withdrawalMethod, destinationAddress } = req.body;
 
     // Fetch user to check balance and account type
-
     const users = await query('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
     const user = users[0];
     // const user = users.find((u) => u._id === userId);
@@ -190,23 +217,30 @@ async function createWithdrawal(req, res) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Validation: Minimum withdrawal is $500
-    if (amount < 500) {
-      return res.status(400).json({
+    // Check if user is frozen
+    if (user.frozen) {
+      return res.status(403).json({
         success: false,
-        message: 'Minimum withdrawal amount is $500',
+        message: 'Your account is frozen. You cannot make withdrawals. Please contact support.',
       });
     }
 
-    // Validation: Maximum daily withdrawal is $500
-    if (amount > 5000) {
+    const { minUsd, maxUsd, frequencyDays, upgradeLevel } = getWithdrawalRulesForUser(user);
+
+    if (amount < minUsd) {
       return res.status(400).json({
         success: false,
-        message: 'Maximum daily withdrawal amount is $5000. Upgrade for higher limits',
+        message: `Minimum withdrawal amount is ${minUsd}`,
       });
     }
 
-    // Validation: Check user has sufficient balance
+    if (maxUsd !== Infinity && amount > maxUsd) {
+      return res.status(400).json({
+        success: false,
+        message: `Maximum daily withdrawal amount is ${maxUsd}. Upgrade for higher limits`,
+      });
+    }
+
     if (user.balanceUsd < amount) {
       return res.status(400).json({
         success: false,
@@ -215,20 +249,16 @@ async function createWithdrawal(req, res) {
       });
     }
 
-    // Check weekly frequency - user can only make 1 withdrawal per week
-    // let withdrawals = await db.read('withdrawals');
-    // if (!withdrawals) withdrawals = [];
-
-    const oneWeekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const frequencyAgo = new Date(Date.now() - frequencyDays * 24 * 60 * 60 * 1000);
     const recentWithdrawal = await query(
       'SELECT COUNT(*) as count FROM withdrawals WHERE userId = ? AND status = ? AND requestedAt > ?',
-      [userId, 'approved', oneWeekAgo]
+      [userId, 'approved', frequencyAgo]
     );
 
     if (recentWithdrawal[0].count > 0) {
       return res.status(400).json({
         success: false,
-        message: 'You can only make one withdrawal per week. Please try again next week or Upgrade for daily withdrawal.',
+        message: `You can only make one withdrawal every ${frequencyDays} day${frequencyDays === 1 ? '' : 's'}. Please try again later.`,
       });
     }
 
@@ -262,6 +292,10 @@ async function createWithdrawal(req, res) {
       requestId: result.insertId,
       amount: formatCurrency(amount, user.currency),
       status: 'pending',
+      withdrawalMinUsd: minUsd,
+      withdrawalMaxUsd: Number.isFinite(maxUsd) ? maxUsd : null,
+      withdrawalFrequencyDays: frequencyDays,
+      upgradeLevel: upgradeLevel || 'free',
     });
   } catch (error) {
     console.error('Withdrawal creation error:', error);
@@ -276,13 +310,13 @@ async function getUserWithdrawals(req, res) {
   try {
     const { id: userId } = req.user;
     const withdrawals = await query('SELECT * FROM withdrawals WHERE userId = ?', [userId]);
-
     const users = await query('SELECT currency FROM users WHERE id = ? LIMIT 1', [userId]);
     const currency = users[0]?.currency || 'USD';
 
     const formatted = withdrawals.map((w) => ({
       ...w,
       amount: formatCurrency(w.amount, currency),
+      status: w.status === 'completed' ? 'approved' : w.status === 'failed' ? 'rejected' : w.status,
     }));
 
     res.json({
@@ -324,6 +358,14 @@ async function createTrade(req, res) {
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Check if user is frozen
+    if (user.frozen) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is frozen. You cannot create trades. Please contact support.',
+      });
     }
 
     // Validation: Check sufficient balance
@@ -440,6 +482,24 @@ async function createUpgrade(req, res) {
     const { id: userId } = req.user;
     const { upgradeLevel, targetLevel, currentLevel, amount } = req.body;
     
+    // Check if user is frozen prior to fetching user
+    const users = await query('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.frozen) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is frozen. You cannot request upgrades. Please contact support.',
+      });
+    }
+
     // Support multiple field names from frontend
     const level = upgradeLevel || targetLevel;
 
@@ -530,6 +590,24 @@ async function createVerification(req, res) {
     const { id: userId } = req.user;
     const { documentType, documentNumber, expiryDate } = req.body;
 
+    // Check if user is frozen
+    const users = await query('SELECT * FROM users WHERE id = ? LIMIT 1', [userId]);
+    const user = users[0];
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (user.frozen) {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is frozen. You cannot request verification. Please contact support.',
+      });
+    }
+
     // Validation
     if (!documentType || !documentNumber) {
       return res.status(400).json({
@@ -544,26 +622,6 @@ async function createVerification(req, res) {
       VALUES (?, ?, ?, ?, ?, ?)`,
       [userId, documentType, documentNumber, expiryDate || null, 'pending', new Date()]
     );
-
-    // // Create verification request
-    // const verification = {
-    //   _id: `verification_${Date.now()}`,
-    //   userId,
-    //   documentType,
-    //   documentNumber,
-    //   expiryDate,
-    //   status: 'pending', // pending | approved | rejected
-    //   requestedAt: new Date().toISOString(),
-    //   approvedAt: null,
-    //   adminNotes: '',
-    // };
-
-    // // Read and update verifications
-    // let verifications = await db.read('verifications');
-    // if (!verifications) verifications = [];
-    // verifications.push(verification);
-
-    // await db.write({ verifications });
 
     res.json({
       success: true,

@@ -26,6 +26,11 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
         onRefresh();
     }, []);
 
+    const getUserId = (user: User | null | Partial<User>) => {
+        if (!user) return '';
+        return (user.id || (user as any)._id || '').toString();
+    };
+
     const handleSelectUser = (user: User) => {
         setSelectedUser(user);
         setEditForm({
@@ -33,6 +38,8 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
             password: String((user as any).password || ''),
             withdrawal_min_usd: (user as any).withdrawal_min_usd ?? 500,
             withdrawal_max_usd: (user as any).withdrawal_max_usd ?? 5000,
+            banned: user.banned ?? false,
+            frozen: user.frozen ?? false,
         });
         setShowPassword(false);
     };
@@ -40,7 +47,7 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
     const handleSave = async () => {
         if (!selectedUser || !editForm) return;
         setIsSaving(true);
-        const success = await onUpdate(selectedUser.id, {
+        const success = await onUpdate(getUserId(selectedUser), {
             firstName: editForm.firstName,
             lastName: editForm.lastName,
             email: editForm.email,
@@ -68,7 +75,7 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
     const handleDelete = async () => {
         if (!selectedUser) return;
         if (!confirm('Are you sure you want to delete this user?')) return;
-        const success = await onDelete(selectedUser.id);
+        const success = await onDelete(getUserId(selectedUser));
         if (success) {
             setSelectedUser(null);
             onRefresh();
@@ -117,11 +124,11 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
                         <div className="divide-y divide-white/5">
                             {filteredUsers.map((user) => (
                                 <motion.div
-                                    key={user._id}
+                                    key={user.id || user._id}
                                     onClick={() => handleSelectUser(user)}
                                     className={`
                     p-4 cursor-pointer transition-all
-                    ${selectedUser?._id === user._id
+                    ${(selectedUser && (selectedUser.id || (selectedUser as any)._id)) === (user.id || user._id)
                                             ? 'bg-blue-500/10 border-l-4 border-blue-500'
                                             : 'hover:bg-white/5 border-l-4 border-transparent'
                                         }
@@ -138,7 +145,7 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
                                                 {user.firstName} {user.lastName} • {user.country || 'Unknown'}
                                             </p>
                                             <p className="text-white/40 text-xs mt-1">
-                                                Balance: ${(user.balanceUsd || 0).toLocaleString()} • ROI: {user.roi || 0}%
+                                                Balance: {(user.balanceUsd || 0).toLocaleString()} • ROI: {user.roi || 0}%
                                             </p>
                                         </div>
                                         <div className="flex flex-col gap-1 items-end">
@@ -283,30 +290,31 @@ export const UsersSection = ({ users, onRefresh, onUpdate, onDelete, loading }: 
                                         <label className="flex items-center gap-2 cursor-pointer">
                                             <input
                                                 type="checkbox"
-                                                checked={editForm.banned || false}
-                                                onChange={(e) => setEditForm({ ...editForm, banned: e.target.checked })}
-                                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-red-500"
-                                            />
-                                            <span className="text-white/70 text-sm">Ban User</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
-                                                checked={editForm.frozen || false}
-                                                onChange={(e) => setEditForm({ ...editForm, frozen: e.target.checked })}
-                                                className="w-4 h-4 rounded border-white/20 bg-white/5 text-yellow-500"
-                                            />
-                                            <span className="text-white/70 text-sm">Freeze Account</span>
-                                        </label>
-                                        <label className="flex items-center gap-2 cursor-pointer">
-                                            <input
-                                                type="checkbox"
                                                 checked={editForm.emailVerified || false}
                                                 onChange={(e) => setEditForm({ ...editForm, emailVerified: e.target.checked })}
                                                 className="w-4 h-4 rounded border-white/20 bg-white/5 text-green-500"
                                             />
                                             <span className="text-white/70 text-sm">Email Verified</span>
                                         </label>
+                                    </div>
+
+                                    <div className="flex gap-3 pt-4 border-t border-white/10">
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => setEditForm({ ...editForm, banned: !editForm.banned })}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors ${editForm.banned ? 'bg-red-600 hover:bg-red-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+                                        >
+                                            {editForm.banned ? 'Unban User' : 'Ban User'}
+                                        </motion.button>
+                                        <motion.button
+                                            whileHover={{ scale: 1.02 }}
+                                            whileTap={{ scale: 0.98 }}
+                                            onClick={() => setEditForm({ ...editForm, frozen: !editForm.frozen })}
+                                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-white font-medium transition-colors ${editForm.frozen ? 'bg-yellow-600 hover:bg-yellow-700' : 'bg-gray-600 hover:bg-gray-700'}`}
+                                        >
+                                            {editForm.frozen ? 'Unfreeze Account' : 'Freeze Account'}
+                                        </motion.button>
                                     </div>
 
                                     <div className="pt-4 border-t border-white/10">

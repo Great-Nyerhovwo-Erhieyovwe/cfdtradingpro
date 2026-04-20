@@ -38,7 +38,7 @@ export async function adminSummary(req, res) {
   }
 }
 
-// Admin login: try DB user first, then fallback to env-admin
+// Admin login: authenticate admin from database only
 export async function adminLogin(req, res) {
   try {
     console.log('🔄 Admin login attempt:', { email: req.body?.email, ip: req.ip });
@@ -74,22 +74,91 @@ export async function adminLogin(req, res) {
       return res.json({ success: true, token, user: { id: sub, email: user.email, role: 'admin' } });
     }
 
-    // fallback to env-configured admin
-    console.log('🔍 Checking environment admin credentials');
-    const adminEmail = process.env.VITE_ADMIN_EMAIL || process.env.ADMIN_EMAIL;
-    const adminPass = process.env.VITE_ADMIN_PASS || process.env.ADMIN_PASS;
-    console.log('🔑 Env admin email configured:', !!adminEmail, 'Pass configured:', !!adminPass);
-    if (email !== adminEmail || password !== adminPass) {
-      console.log('❌ Environment admin credentials mismatch. Email match:', email === adminEmail, 'Pass match:', password === adminPass);
-      return res.status(401).json({ message: 'Invalid admin credentials' });
-    }
-    const sub = adminEmail;
-    console.log('✅ Admin authenticated, generating token');
-    const token = jwt.sign({ sub, role: 'admin' }, process.env.JWT_SECRET || process.env.VITE_JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || process.env.VITE_JWT_EXPIRES_IN || '24h' });
-    console.log('✅ Token generated successfully, token length:', token.length);
-    return res.json({ success: true, token, user: { id: sub, email: adminEmail, role: 'admin' } });
+    console.log('❌ Admin login failure: admin user not found in database for', email);
+    return res.status(401).json({ message: 'Invalid admin credentials' });
   } catch (e) {
     console.error('Admin login error:', e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export async function getAdminProfile(req, res) {
+  try {
+    const db = getDb();
+    if (!db) {
+      console.error('GetAdminProfile: Database not connected');
+      return res.status(500).json({ message: 'Database not connected' });
+    }
+
+    const adminEmail = req.user?.email;
+    if (!adminEmail) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const [rows] = await db.query(
+      'SELECT id, email, firstName, lastName, role, createdAt FROM users WHERE email = ? LIMIT 1',
+      [adminEmail]
+    );
+
+    const profile = rows[0];
+    if (!profile) {
+      return res.status(404).json({ message: 'Admin profile not found' });
+    }
+
+    return res.json(profile);
+  } catch (e) {
+    console.error('Get admin profile error:', e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export async function updateAdminProfile(req, res) {
+  try {
+    const db = getDb();
+    if (!db) {
+      console.error('UpdateAdminProfile: Database not connected');
+      return res.status(500).json({ message: 'Database not connected' });
+    }
+
+    const adminEmail = req.user?.email;
+    if (!adminEmail) {
+      return res.status(401).json({ message: 'Unauthorized' });
+    }
+
+    const updates = req.body || {};
+    const allowedFields = ['email', 'password', 'firstName', 'lastName'];
+    const safeUpdates = {};
+
+    for (const key of Object.keys(updates)) {
+      if (allowedFields.includes(key)) {
+        safeUpdates[key] = updates[key];
+      }
+    }
+
+    if (Object.keys(safeUpdates).length === 0) {
+      return res.status(400).json({ message: 'No valid fields to update' });
+    }
+
+    const updateKeys = Object.keys(safeUpdates);
+    const updateValues = Object.values(safeUpdates);
+    const setClause = updateKeys.map((key) => `${key} = ?`).join(', ');
+
+    await db.query(
+      `UPDATE users SET ${setClause} WHERE email = ?`,
+      [...updateValues, adminEmail]
+    );
+
+    // If email was updated, use the new email for the SELECT
+    const selectEmail = safeUpdates.email || adminEmail;
+
+    const [rows] = await db.query(
+      'SELECT id, email, firstName, lastName, role, createdAt FROM users WHERE email = ? LIMIT 1',
+      [selectEmail]
+    );
+
+    return res.json(rows[0] || {});
+  } catch (e) {
+    console.error('Update admin profile error:', e);
     return res.status(500).json({ message: 'Server error' });
   }
 }
@@ -178,7 +247,7 @@ export async function updateUser(req, res) {
 
     // allow admin to set limit and flags
     const allowedFields = [
-      'firstName', 'lastName', 'email', 'country', 'role', 'emailVerified', 'banned', 'frozen',
+      'firstName', 'lastName', 'email', 'password', 'country', 'role', 'emailVerified', 'banned', 'frozen',
       'withdrawal_min_usd', 'withdrawal_max_usd', 'balanceUsd', 'roi', 'upgradeLevel', 'timezone', 'language'
     ];
 
@@ -418,5 +487,86 @@ export async function updateUpgrade(req, res) {
   } catch (e) {
     console.error('Update upgrade error:', e);
     return res.status(500).json({ message: 'Server error', error: e.message });
+  }
+}
+
+// Deposit Settings CRUD
+export async function getDepositSettings(req, res) {
+  try {
+    const db = getDb();
+    if (!db) {
+      console.error('GetDepositSettings: Database not connected');
+      return res.status(500).json({ message: 'Database not connected' });
+    }
+
+    const [rows] = await db.query('SELECT * FROM deposit_settings WHERE id = 1 LIMIT 1');
+    let settings = rows[0];
+
+    // If no settings exist, create default ones
+    if (!settings) {
+      console.log('🔧 Creating default deposit settings...');
+      await db.query(
+        'INSERT INTO deposit_settings (id, bank_account_number, bank_account_holder, bank_routing_number, bank_name, crypto_address) VALUES (1, "", "", "", "", "")'
+      );
+      settings = {
+        id: 1,
+        bank_account_number: '',
+        bank_account_holder: '',
+        bank_routing_number: '',
+        bank_name: '',
+        crypto_address: '',
+      };
+    }
+
+    const data = {
+      bank: {
+        accountNumber: settings.bank_account_number || '',
+        accountHolder: settings.bank_account_holder || '',
+        routingNumber: settings.bank_routing_number || '',
+        bankName: settings.bank_name || '',
+      },
+      crypto: {
+        address: settings.crypto_address || '',
+      },
+    };
+
+    return res.json({ success: true, data });
+  } catch (e) {
+    console.error('Get deposit settings error:', e);
+    return res.status(500).json({ message: 'Server error' });
+  }
+}
+
+export async function updateDepositSettings(req, res) {
+  try {
+    const db = getDb();
+    if (!db) {
+      console.error('UpdateDepositSettings: Database not connected');
+      return res.status(500).json({ message: 'Database not connected' });
+    }
+
+    const { bank, crypto } = req.body;
+
+    const updates = {
+      bank_account_number: bank?.accountNumber,
+      bank_account_holder: bank?.accountHolder,
+      bank_routing_number: bank?.routingNumber,
+      bank_name: bank?.bankName,
+      crypto_address: crypto?.address,
+    };
+
+    const updateKeys = Object.keys(updates);
+    const updateValues = Object.values(updates);
+    const setClause = updateKeys.map(k => `${k} = ?`).join(", ");
+
+    const [result] = await db.query(
+      `UPDATE deposit_settings SET ${setClause} WHERE id = 1`,
+      updateValues
+    );
+
+    return res.json({ success: true });
+  } catch (e) {
+    console.error('Update deposit settings error:', e);
+    return res.status(500).json({ message: 'Server error' });
   }
 }

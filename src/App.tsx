@@ -1,5 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { DarkModeProvider } from "./contexts/DarkModeContext";
 import Home from "./pages/Home/Home";
 import Contact from "./pages/Home/Contact/Contact";
 import About from "./pages/Home/About/AboutUs";
@@ -27,7 +28,8 @@ function App() {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
+      <DarkModeProvider>
+        <Router>
       {/* Homepage routes */}
       <Routes>
         <Route path="/" element={<Home />} />
@@ -64,6 +66,7 @@ function App() {
         <Route path="/admin/dashboard" element={<ProtectedAdminRoute element={<AdminDashboard />} />} />
       </Routes>
       </Router>
+      </DarkModeProvider>
     </QueryClientProvider>
   );
 }

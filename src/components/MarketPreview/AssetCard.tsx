@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { createChart, LineStyle, ColorType, LineSeries } from "lightweight-charts";
 import type { UTCTimestamp } from "lightweight-charts";
+import { motion } from "framer-motion";
 
 type AssetCardProps = {
   name: string;
@@ -24,37 +25,56 @@ export const AssetCard = ({
 
     const chart = createChart(chartContainer.current, {
       width: 150,
-      height: 60,
+      height: 50,
       layout: { background: { type: ColorType.Solid, color: "transparent" } },
       grid: { vertLines: { visible: false }, horzLines: { visible: false } },
       timeScale: { visible: false },
       rightPriceScale: { visible: false },
     });
 
+    const lineColor = change >= 0 ? "#4ade80" : "#ef4444";
     const series = chart.addSeries(LineSeries, {
-      color: "#00d8ff",
-      lineWidth: 2,
+      color: lineColor,
+      lineWidth: 1,
       lineStyle: LineStyle.Solid,
     });
     series.setData(data.map((v, i) => ({ time: i as UTCTimestamp, value: v })));
 
     return () => chart.remove();
-  }, [data]);
+  }, [data, change]);
 
   const changeColor = change >= 0 ? "text-green-400" : "text-red-400";
 
   return (
-    <div className="flex w-full flex-col items-start p-3 sm:p-4 border border-white/20 shadow-lg rounded-lg hover:bg-white/5 transition-colors">
-      <div className="flex w-full justify-between text-xs sm:text-sm text-white">
-        <span className="font-medium">{name}</span>
-        <span className="text-white/60">{symbol}</span>
+    <motion.div
+      className="flex flex-col h-full p-4 sm:p-5 rounded-lg bg-gradient-to-br from-white/5 to-white/2 border border-white/10 hover:border-blue-400/30 transition-all duration-300 group"
+      whileHover={{ y: -4, borderColor: "rgba(96, 165, 250, 0.3)" }}
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+    >
+      {/* Header */}
+      <div className="flex justify-between items-start mb-3">
+        <div>
+          <h3 className="text-sm sm:text-base font-bold text-white group-hover:text-blue-400 transition-colors">
+            {name}
+          </h3>
+          <p className="text-xs text-white/60 mt-0.5">{symbol}</p>
+        </div>
       </div>
-      <div className="mt-2 text-base sm:text-lg font-medium text-accent">{price}</div>
-      <div className={`mt-1 text-xs sm:text-sm ${changeColor}`}>
-        {change > 0 ? "+" : ""}
-        {change.toFixed(2)}%
+
+      {/* Price */}
+      <div className="mb-2 sm:mb-3">
+        <p className="text-lg sm:text-xl font-bold text-white">{price}</p>
       </div>
-      <div ref={chartContainer} className="mt-3 w-full" />
-    </div>
+
+      {/* Change indicator */}
+      <div className={`text-xs sm:text-sm font-semibold mb-3 sm:mb-4 ${changeColor}`}>
+        {change > 0 ? "▲" : "▼"} {Math.abs(change).toFixed(2)}%
+      </div>
+
+      {/* Chart */}
+      <div ref={chartContainer} className="flex-1 w-full" />
+    </motion.div>
   );
 };

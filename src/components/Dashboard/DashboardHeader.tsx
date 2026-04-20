@@ -29,16 +29,16 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="flex items-center justify-between px-6 py-4">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
+        <div className="flex items-center justify-between px-6 py-4 dark:bg-gray-800">
           {/* Logo */}
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-800 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">CFD</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900 hidden sm:block">
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white hidden sm:block">
               CFD Trading Pro
-            </h1>
+            </h1> 
           </div>
 
           {/* Right Section */}
@@ -46,7 +46,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             {/* Settings Icon */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+              className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
               title="Settings"
             >
               <svg
@@ -79,7 +79,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
             />
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-200" />
+            <div className="w-px h-6 bg-gray-200 dark:bg-gray-600" /> 
 
             {/* Profile Dropdown */}
             <ProfileDropdown

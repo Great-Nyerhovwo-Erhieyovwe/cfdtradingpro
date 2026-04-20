@@ -11,7 +11,7 @@ CREATE TABLE users (
     country VARCHAR(100),
     currency VARCHAR(10) DEFAULT 'USD',
     accountType ENUM('individual', 'corporate', 'partnership') DEFAULT 'individual',
-    role VARCHAR(50) DEFAULT 'user',
+    role ENUM('user', 'admin', 'superadmin') DEFAULT 'user',
     dateOfBirth DATE,
     emailVerified BOOLEAN DEFAULT FALSE,
     upgradeLevel ENUM('free', 'mini', 'standard', 'pro', 'premium') DEFAULT 'free',
@@ -23,6 +23,14 @@ CREATE TABLE users (
     verificationApprovedAt DATETIME NULL,
     balanceUsd DECIMAL(15,2) DEFAULT 0.00,
     roi DECIMAL(15,2) DEFAULT 0.00,
+    banned BOOLEAN DEFAULT false,
+    frozen BOOLEAN DEFAULT false,
+    bankAccountHolder VARCHAR(255),
+    bankName VARCHAR(255),
+    bankAccountNumber VARCHAR(255),
+    bankRoutingNumber VARCHAR(255),
+    bitcoinAddress VARCHAR(255),
+    ethereumAddress VARCHAR(255),
     withdrawal_min_usd DECIMAL(15,2) DEFAULT 500.00,
     withdrawal_max_usd DECIMAL(15,2) DEFAULT 5000.00,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -152,6 +160,20 @@ CREATE TABLE messages (
     FOREIGN KEY (recipientId) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE deposit_settings (
+    id INT PRIMARY KEY DEFAULT 1,
+    bank_account_number VARCHAR(255),
+    bank_account_holder VARCHAR(255),
+    bank_routing_number VARCHAR(255),
+    bank_name VARCHAR(255),
+    crypto_address VARCHAR(255),
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Insert default deposit settings
+INSERT INTO deposit_settings (id, bank_account_number, bank_account_holder, bank_routing_number, bank_name, crypto_address) 
+VALUES (1, '1234567890', 'CFD Financial Bank', '121000248', 'CFD Financial Bank', 'THQYgNzTYo7g5aBhhJLMc2FaA632FwZ4WK');
+
 CREATE TABLE support_tickets (
     id VARCHAR(36) PRIMARY KEY,
     userId VARCHAR(36) NOT NULL,
@@ -186,7 +208,6 @@ CREATE TABLE wallets (
 INSERT INTO users (id, firstName, lastName, username, email, password, country, currency, accountType, role, emailVerified, balanceUsd, roi)
 VALUES ('550e8400-e29b-41d4-a716-446655440000', 'Admin', 'User', 'admin_cfd', 'cfdtradingpro@gmail.com', 'CFDTrading@101', 'USA', 'USD', 'individual', 'admin', TRUE, 5000.00, 0.00);
 
--- Upgrade Plans
 -- Upgrade Plans
 INSERT INTO upgrade_plans (id, name, description, priceMonthly, priceAnnual, features) VALUES
 ('660e8400-e29b-41d4-a716-446655440001', 'mini', 'Mini Plan - Entry Level Trading', 49.99, 499.90, 'Up to $5,000 trading limit,Basic market data,Email support'),

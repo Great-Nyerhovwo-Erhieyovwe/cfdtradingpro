@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
+import { useDarkMode } from "../../contexts/DarkModeContext";
 
 interface UserProfile {
   firstName: string;
@@ -26,6 +27,7 @@ const SettingsPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "preferences">("preferences");
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { isDarkMode, setDarkMode } = useDarkMode();
 
   // Profile state
   const [profile, setProfile] = useState<UserProfile>({
@@ -38,7 +40,7 @@ const SettingsPageContent: React.FC = () => {
 
   // Settings state (fetched from backend)
   const [settings, setSettings] = useState<SettingsState>({
-    darkMode: false,
+    darkMode: isDarkMode,
     notifications: true,
     emailMarketing: false,
     language: "en",
@@ -110,13 +112,9 @@ const SettingsPageContent: React.FC = () => {
     const newSettings = { ...settings, [field]: value };
     setSettings(newSettings);
 
-    // Apply dark mode immediately to DOM
+    // Apply dark mode immediately using context
     if (field === "darkMode") {
-      if (value) {
-        document.documentElement.classList.add("dark");
-      } else {
-        document.documentElement.classList.remove("dark");
-      }
+      setDarkMode(value);
     }
 
     // Submit to backend asynchronously (no modal, silent update)
@@ -210,21 +208,21 @@ const SettingsPageContent: React.FC = () => {
       />
 
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your account and preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">Manage your account and preferences</p>
       </div>
 
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         {/* Tabs */}
-        <div className="flex border-b border-gray-200">
+        <div className="flex border-b border-gray-200 dark:border-gray-700">
           {["preferences", "profile"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as "preferences" | "profile")}
               className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
                 activeTab === tab
-                  ? "text-purple-600 border-b-2 border-purple-600 bg-purple-50"
-                  : "text-gray-700 hover:text-gray-900"
+                  ? "text-purple-600 border-b-2 border-purple-600 bg-purple-50 dark:bg-purple-900/20"
+                  : "text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
               }`}
             >
               {tab === "preferences" ? "Preferences" : "Profile"}
@@ -238,24 +236,24 @@ const SettingsPageContent: React.FC = () => {
           {activeTab === "preferences" && (
             <div className="space-y-6">
               {/* Dark Mode */}
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Theme</h2>
-                <div className="flex items-center justify-between p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Theme</h2>
+                <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900">Dark Mode</p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="font-medium text-gray-900 dark:text-white">Dark Mode</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       Switch to dark theme for easier viewing in low light
                     </p>
                   </div>
                   <button
-                    onClick={() => handleSettingChange("darkMode", !settings.darkMode)}
+                    onClick={() => handleSettingChange("darkMode", !isDarkMode)}
                     className={`relative w-14 h-8 rounded-full transition-colors ${
-                      settings.darkMode ? "bg-purple-600" : "bg-gray-300"
+                      isDarkMode ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"
                     }`}
                   >
                     <div
                       className={`absolute w-6 h-6 bg-white rounded-full top-1 transition-transform ${
-                        settings.darkMode ? "translate-x-7" : "translate-x-1"
+                        isDarkMode ? "translate-x-7" : "translate-x-1"
                       }`}
                     />
                   </button>
@@ -263,20 +261,20 @@ const SettingsPageContent: React.FC = () => {
               </div>
 
               {/* Notifications */}
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Notifications</h2>
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Notifications</h2>
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">Push Notifications</p>
-                      <p className="text-sm text-gray-600">Receive alerts about trades and account activity</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Push Notifications</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Receive alerts about trades and account activity</p>
                     </div>
                     <button
                       onClick={() =>
                         handleSettingChange("notifications", !settings.notifications)
                       }
                       className={`relative w-12 h-7 rounded-full transition-colors ${
-                        settings.notifications ? "bg-purple-600" : "bg-gray-300"
+                        settings.notifications ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"
                       }`}
                     >
                       <div
@@ -286,17 +284,17 @@ const SettingsPageContent: React.FC = () => {
                       />
                     </button>
                   </div>
-                  <div className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                  <div className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
                     <div>
-                      <p className="font-medium text-gray-900">Email Marketing</p>
-                      <p className="text-sm text-gray-600">Receive promotional offers and updates</p>
+                      <p className="font-medium text-gray-900 dark:text-white">Email Marketing</p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Receive promotional offers and updates</p>
                     </div>
                     <button
                       onClick={() =>
                         handleSettingChange("emailMarketing", !settings.emailMarketing)
                       }
                       className={`relative w-12 h-7 rounded-full transition-colors ${
-                        settings.emailMarketing ? "bg-purple-600" : "bg-gray-300"
+                        settings.emailMarketing ? "bg-purple-600" : "bg-gray-300 dark:bg-gray-600"
                       }`}
                     >
                       <div
@@ -311,10 +309,10 @@ const SettingsPageContent: React.FC = () => {
 
               {/* Display Preferences */}
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Display</h2>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Display</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Language
                     </label>
                     <select
@@ -322,7 +320,7 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleSettingChange("language", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="en">English</option>
                       <option value="es">Español</option>
@@ -331,7 +329,7 @@ const SettingsPageContent: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Currency
                     </label>
                     <select
@@ -339,7 +337,7 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleSettingChange("currency", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
@@ -348,7 +346,7 @@ const SettingsPageContent: React.FC = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Timezone
                     </label>
                     <select
@@ -356,7 +354,7 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleSettingChange("timezone", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="UTC">UTC</option>
                       <option value="EST">EST</option>
@@ -378,8 +376,8 @@ const SettingsPageContent: React.FC = () => {
           {activeTab === "profile" && (
             <div className="space-y-6">
               {/* Profile Picture */}
-              <div className="border-b border-gray-200 pb-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-4">Profile Picture</h2>
+              <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Profile Picture</h2>
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-purple-600 rounded-full flex items-center justify-center">
                     <span className="text-white font-bold text-2xl">
@@ -390,7 +388,7 @@ const SettingsPageContent: React.FC = () => {
                     <button className="px-4 py-2 bg-purple-600 text-white rounded-lg font-medium hover:bg-purple-700 transition-colors">
                       Upload Photo
                     </button>
-                    <button className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-colors">
+                    <button className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
                       Remove
                     </button>
                   </div>
@@ -399,12 +397,12 @@ const SettingsPageContent: React.FC = () => {
 
               {/* Personal Information */}
               <div>
-                <h2 className="text-lg font-bold text-gray-900 mb-4">
+                <h2 className="text-lg font-bold text-gray-900 dark:text-white mb-4">
                   Personal Information
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       First Name
                     </label>
                     <input
@@ -413,11 +411,11 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleProfileChange("firstName", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Last Name
                     </label>
                     <input
@@ -426,22 +424,22 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleProfileChange("lastName", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Email Address
                     </label>
                     <input
                       type="email"
                       value={profile.email}
                       disabled
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-400 cursor-not-allowed"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Phone Number
                     </label>
                     <input
@@ -450,7 +448,7 @@ const SettingsPageContent: React.FC = () => {
                       onChange={(e) =>
                         handleProfileChange("phone", e.target.value)
                       }
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
                 </div>

@@ -30,6 +30,10 @@ router.get('/summary', adminCtrl.adminSummary);
 /**
  * USERS MANAGEMENT
  */
+// Current admin profile and settings
+router.get('/profile', adminCtrl.getAdminProfile);
+router.patch('/profile', adminCtrl.updateAdminProfile);
+
 // List all users with details (balance, role, status, etc.)
 router.get('/users', adminCtrl.listUsers);
 // Create new user
@@ -53,16 +57,16 @@ router.patch('/transactions/:id', async (req, res) => {
     const db = getDb();
     if (!db) return res.status(500).json({ message: 'Database not connected' });
 
-    // Check deposits table first
-    const [depositRows] = await db.query('SELECT id FROM deposits WHERE id = ? LIMIT 1', [req.params.id]);
-    if (depositRows.length > 0) {
-        return depositsCtrl.updateDeposit(req, res);
-    }
-
-    // Then check withdrawals table
+    // Check withdrawals table first (since withdrawals should subtract, not add)
     const [withdrawalRows] = await db.query('SELECT id FROM withdrawals WHERE id = ? LIMIT 1', [req.params.id]);
     if (withdrawalRows.length > 0) {
         return withdrawalsCtrl.updateWithdrawal(req, res);
+    }
+
+    // Then check deposits table
+    const [depositRows] = await db.query('SELECT id FROM deposits WHERE id = ? LIMIT 1', [req.params.id]);
+    if (depositRows.length > 0) {
+        return depositsCtrl.updateDeposit(req, res);
     }
 
     return res.status(404).json({ message: 'Transaction not found' });
@@ -132,6 +136,13 @@ router.delete('/plans/:id', adminCtrl.deletePlan);
  */
 router.get('/upgrades', adminCtrl.listUpgrades);
 router.patch('/upgrades/:id', adminCtrl.updateUpgrade);
+
+/**
+ * DEPOSIT SETTINGS
+ * Admin can manage global deposit method settings
+ */
+router.get('/deposit-settings', adminCtrl.getDepositSettings);
+router.put('/deposit-settings', adminCtrl.updateDepositSettings);
 
 /**
  * DEBUG ENDPOINT

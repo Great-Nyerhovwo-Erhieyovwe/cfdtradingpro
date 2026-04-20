@@ -103,7 +103,7 @@ export const DepositsSection = ({ deposits, onRefresh, onApprove, onReject, load
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-white text-lg">${deposit.amount.toLocaleString()}</span>
+                                                <span className="font-bold text-white text-lg">{deposit.amount.toLocaleString()}</span>
                                                 <span className="text-white/60 text-sm uppercase">{deposit.currency}</span>
                                             </div>
                                             <p className="text-white/50 text-sm">User: {getUserDisplay(deposit.userId)}</p>
@@ -132,7 +132,7 @@ export const DepositsSection = ({ deposits, onRefresh, onApprove, onReject, load
                                 <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-white/50">Amount</span>
-                                        <span className="text-white font-medium">${selectedDeposit.amount.toLocaleString()}</span>
+                                        <span className="text-white font-medium">{selectedDeposit.amount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-white/50">Method</span>

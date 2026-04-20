@@ -31,14 +31,14 @@ const MarketsPageContent: React.FC = () => {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Markets & Pairs</h1>
-        <p className="text-gray-600 mt-2">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Markets & Pairs</h1>
+        <p className="text-gray-600 dark:text-gray-400 mt-2">
           Explore and trade cryptocurrency pairs
         </p>
       </div>
 
       {/* Search and Filter */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <div className="flex-1 w-full">
             <input
@@ -57,7 +57,7 @@ const MarketsPageContent: React.FC = () => {
                 className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                   selectedCategory === category
                     ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600"
                 }`}
               >
                 {category.charAt(0).toUpperCase() + category.slice(1)}
@@ -68,24 +68,24 @@ const MarketsPageContent: React.FC = () => {
       </div>
 
       {/* Markets Table */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+              <tr className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Pair
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Price
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   24h Change
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Volume
                 </th>
-                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                   Action
                 </th>
               </tr>
@@ -94,23 +94,23 @@ const MarketsPageContent: React.FC = () => {
               {filteredMarkets.map((market, idx) => (
                 <tr
                   key={market.id}
-                  className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${
-                    idx % 2 === 0 ? "bg-white" : "bg-gray-50"
+                  className={`border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${
+                    idx % 2 === 0 ? "bg-white dark:bg-gray-800" : "bg-gray-50 dark:bg-gray-900"
                   }`}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center gap-3">
                       <span className="text-2xl">{market.icon}</span>
                       <div>
-                        <p className="font-bold text-gray-900">
+                        <p className="font-bold text-gray-900 dark:text-gray-100">
                           {market.symbol}
                         </p>
-                        <p className="text-xs text-gray-600">{market.name}</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{market.name}</p>
                       </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-gray-900 dark:text-gray-100">
                       ${market.price.toFixed(2)}
                     </p>
                   </td>
@@ -127,7 +127,7 @@ const MarketsPageContent: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <p className="text-gray-700 font-medium">{market.volume}</p>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium">{market.volume}</p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <button className="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm" onClick={() => navigate('/dashboard/trade')}>
@@ -143,20 +143,20 @@ const MarketsPageContent: React.FC = () => {
 
       {/* Market Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">Total Market Cap</p>
-          <p className="text-3xl font-bold text-gray-900">$2.1T</p>
-          <p className="text-sm text-green-600 mt-2">↑ 2.5% (24h)</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Total Market Cap</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">$2.1T</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-2">↑ 2.5% (24h)</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">24h Volume</p>
-          <p className="text-3xl font-bold text-gray-900">$85.3B</p>
-          <p className="text-sm text-red-600 mt-2">↓ 1.2% (24h)</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">24h Volume</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">$85.3B</p>
+          <p className="text-sm text-red-600 dark:text-red-400 mt-2">↓ 1.2% (24h)</p>
         </div>
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <p className="text-sm text-gray-600 mb-2">BTC Dominance</p>
-          <p className="text-3xl font-bold text-gray-900">48.5%</p>
-          <p className="text-sm text-green-600 mt-2">↑ 0.3% (24h)</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">BTC Dominance</p>
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">48.5%</p>
+          <p className="text-sm text-green-600 dark:text-green-400 mt-2">↑ 0.3% (24h)</p>
         </div>
       </div>
     </div>

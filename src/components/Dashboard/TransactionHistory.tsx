@@ -72,15 +72,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   // Show only the 5 most recent transactions in dashboard
   const recentTransactions = sortedTransactions.slice(0, 5);
   return (
-    <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-      <div className="p-4 sm:p-6 border-b border-gray-200">
-        <h2 className="text-base sm:text-lg font-bold text-gray-900">Transaction History</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
+      <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700">
+        <h2 className="text-base sm:text-lg font-bold text-gray-900 dark:text-white">Transaction History</h2>
       </div>
 
       {recentTransactions.length === 0 ? (
         <div className="p-6 sm:p-8 text-center">
           <svg
-            className="w-10 sm:w-12 h-10 sm:h-12 text-gray-300 mx-auto mb-3"
+            className="w-10 sm:w-12 h-10 sm:h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3"
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -92,14 +92,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
             />
           </svg>
-          <p className="text-sm sm:text-base text-gray-500">No transactions yet</p>
+          <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400">No transactions yet</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-200 bg-gray-50">
-                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <tr className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Type
                 </th>
                 <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -123,27 +123,27 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
               {recentTransactions.map((transaction) => (
                 <tr
                   key={transaction.id}
-                  className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+                  className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
                   <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
                     <div className="flex items-center gap-1 sm:gap-2">
                       <span className="text-base sm:text-lg">
                         {typeIcons[transaction.type as keyof typeof typeIcons] || "💱"}
                       </span>
-                      <span className="text-xs sm:text-sm font-medium text-gray-900 capitalize">
+                      <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100 capitalize">
                         {transaction.type}
                       </span>
                     </div>
                   </td>
                   <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                    <span className="text-xs sm:text-sm font-medium text-gray-900">
+                    <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-gray-100">
                       {transaction.symbol.toUpperCase()}
                     </span>
                   </td>
                   <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                    <span className="text-xs sm:text-sm text-gray-700">
+                    <span className="text-xs sm:text-sm text-gray-700 dark:text-gray-300">
                       {transaction.type === 'deposit' || transaction.type === 'withdrawal' 
-                        ? (transaction as any).formattedAmount || `$${transaction.amount.toFixed(2)}`
+                        ? (transaction as any).formattedAmount || `${transaction.amount.toFixed(2)}`
                         : transaction.amount.toFixed(4)}
                     </span>
                   </td>
@@ -155,7 +155,7 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
                     </span>
                   </td>
                   <td className="px-3 sm:px-6 py-2 sm:py-4 whitespace-nowrap">
-                    <span className="text-xs sm:text-sm text-gray-600">
+                    <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(transaction.date)}
                     </span>
                   </td>
@@ -177,8 +177,8 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
       )}
 
       {sortedTransactions.length > 5 && (
-        <div className="px-4 sm:px-6 py-2 sm:py-3 border-t border-gray-200 text-center">
-          <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-700 font-medium">
+        <div className="px-4 sm:px-6 py-2 sm:py-3 border-t border-gray-200 dark:border-gray-700 text-center">
+          <button className="text-xs sm:text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">
             View All {sortedTransactions.length} Transactions
           </button>
         </div>

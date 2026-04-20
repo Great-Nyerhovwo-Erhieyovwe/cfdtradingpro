@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
 import {
-    FiPieChart, FiUsers, FiArrowDownCircle, FiArrowUpCircle,
-    FiTrendingUp, FiStar, FiCheckCircle, FiMessageSquare
+    FiPieChart, FiUsers, FiUser, FiArrowDownCircle, FiArrowUpCircle,
+    FiTrendingUp, FiStar, FiCheckCircle, FiMessageSquare, FiSettings
 } from 'react-icons/fi';
 import type { AdminTab } from '../../../types/admin';
+
+console.log(FiMessageSquare)
 
 interface SidebarProps {
     activeTab: AdminTab;
@@ -15,12 +17,14 @@ interface SidebarProps {
 const tabs: { id: AdminTab; label: string; icon: React.ReactNode; badge?: string }[] = [
     { id: 'overview', label: 'Overview', icon: <FiPieChart /> },
     { id: 'users', label: 'Users', icon: <FiUsers /> },
+    { id: 'profile', label: 'Profile', icon: <FiUser /> },
     { id: 'deposits', label: 'Deposits', icon: <FiArrowDownCircle />, badge: 'pending' },
     { id: 'withdrawals', label: 'Withdrawals', icon: <FiArrowUpCircle />, badge: 'pending' },
     { id: 'trades', label: 'Trades', icon: <FiTrendingUp /> },
     { id: 'upgrades', label: 'Upgrades', icon: <FiStar />, badge: 'pending' },
     { id: 'verifications', label: 'Verifications', icon: <FiCheckCircle />, badge: 'pending' },
-    { id: 'messages', label: 'Messages', icon: <FiMessageSquare /> },
+    { id: 'settings', label: 'Settings', icon: <FiSettings /> },
+    // { id: 'messages', label: 'Messages', icon: <FiMessageSquare /> },
 ];
 
 export const Sidebar = ({ activeTab, onTabChange, isMobileOpen, onMobileClose }: SidebarProps) => {

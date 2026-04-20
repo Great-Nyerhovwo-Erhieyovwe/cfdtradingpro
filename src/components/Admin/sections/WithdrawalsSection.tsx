@@ -3,10 +3,11 @@ import { motion } from 'framer-motion';
 import { FiArrowUpCircle, FiCheck, FiX } from 'react-icons/fi';
 import { GlassCard } from '../ui/GlassCard';
 import { StatusBadge } from '../ui/StatusBadge';
-import type { Withdrawal } from '../../../types/admin';
+import type { User, Withdrawal } from '../../../types/admin';
 
 interface WithdrawalsSectionProps {
     withdrawals: Withdrawal[];
+    user: User[];
     onRefresh: () => void;
     onApprove: (id: string, notes?: string) => Promise<boolean>;
     onReject: (id: string, notes?: string) => Promise<boolean>;
@@ -35,6 +36,8 @@ export const WithdrawalsSection = ({ withdrawals, onRefresh, onApprove, onReject
             setSelectedWithdrawal(null);
             setAdminNotes('');
             onRefresh();
+        } else {
+            alert('Unable to approve withdrawal. Check the console for details.');
         }
     };
 
@@ -47,6 +50,8 @@ export const WithdrawalsSection = ({ withdrawals, onRefresh, onApprove, onReject
             setSelectedWithdrawal(null);
             setAdminNotes('');
             onRefresh();
+        } else {
+            alert('Unable to reject withdrawal. Check the console for details.');
         }
     };
 
@@ -103,7 +108,7 @@ export const WithdrawalsSection = ({ withdrawals, onRefresh, onApprove, onReject
                                     <div className="flex items-center justify-between">
                                         <div>
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="font-bold text-white text-lg">${withdrawal.amount.toLocaleString()}</span>
+                                                <span className="font-bold text-white text-lg">{withdrawal.amount.toLocaleString()}</span>
                                                 <span className="text-white/60 text-sm uppercase">{withdrawal.currency}</span>
                                             </div>
                                             <p className="text-white/50 text-sm">User: {getUserDisplay(withdrawal.userId)}</p>
@@ -132,7 +137,7 @@ export const WithdrawalsSection = ({ withdrawals, onRefresh, onApprove, onReject
                                 <div className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-white/50">Amount</span>
-                                        <span className="text-white font-medium">${selectedWithdrawal.amount.toLocaleString()}</span>
+                                        <span className="text-white font-medium">{selectedWithdrawal.amount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-white/50">Method</span>

@@ -9,7 +9,7 @@ const markets = [
 
 export default function TopScroller() {
   return (
-    <div className="w-full bg-accent text-primary overflow-hidden whitespace-nowrap py-1">
+    <div className="w-full bg-accent text-primary overflow-hidden whitespace-nowrap py-2">
       <div className="flex animate-scroll gap-10">
         
         {[...markets, ...markets].map((item, i) => (

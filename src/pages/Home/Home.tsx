@@ -60,17 +60,20 @@ export const Home = () => {
                 }}
             />
             <TopScroller />
-            <Navbar />
-            <Hero />
-            <TrustStrip />
-            <MarketPreview />
-            <WhyChoose />
-            <HowItWorks />
-            <AccountLevels />
-            <DashboardMock />
-            <Testimonials />
-            <FinalCTA />
-            <Footer />
+
+<div className="pt-16 sm:pt-20">
+  <Navbar />
+  <Hero />
+  <TrustStrip />
+  <MarketPreview />
+  <WhyChoose />
+  <HowItWorks />
+  <AccountLevels />
+  <DashboardMock />
+  <Testimonials />
+  <FinalCTA />
+  <Footer />
+</div>
 
             {/* Popup (Global overlay) */}
             <LiveActivityPopup />

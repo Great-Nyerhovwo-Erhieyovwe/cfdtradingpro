@@ -61,7 +61,7 @@ export const Home = () => {
             />
             <TopScroller />
 
-<div className="pt-16 sm:pt-20">
+<>
   <Navbar />
   <Hero />
   <TrustStrip />
@@ -73,7 +73,7 @@ export const Home = () => {
   <Testimonials />
   <FinalCTA />
   <Footer />
-</div>
+<>
 
             {/* Popup (Global overlay) */}
             <LiveActivityPopup />

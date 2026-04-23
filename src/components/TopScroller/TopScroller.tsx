@@ -10,9 +10,9 @@ const markets = [
 export default function TopScroller() {
   return (
     <div className="w-full bg-accent text-primary overflow-hidden whitespace-nowrap py-2">
-      <div className="flex animate-scroll gap-10">
+      <div className="flex w-max animate-scroll gap-10">
         
-        {[...markets, ...markets].map((item, i) => (
+        {[...markets, ...markets, ...markets, ...markets].map((item, i) => (
           <div
             key={i}
             className="flex items-center gap-2 text-sm font-medium"

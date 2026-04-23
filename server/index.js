@@ -110,7 +110,7 @@ const __dirname = dirname(__filename);
 app.use(express.static(path.join(__dirname, 'dist')));
 
 // 2. SPA fallback (VERY IMPORTANT FIX)
-app.use((req, res) => {
+app.get((req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 

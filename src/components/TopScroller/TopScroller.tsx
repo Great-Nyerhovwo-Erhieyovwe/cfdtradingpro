@@ -9,7 +9,7 @@ const messages = [
 
 export default function TopScroller() {
     return (
-        <div className="w-full bg-accent text-primary overflow-hidden whitespace-nowrap py-2">
+        <div className="w-full bg-accent text-primary overflow-hidden whitespace-nowrap py-1">
             <div className="flex animate-scroll gap-10">
                 {/* Duplicate for smooth loop */}
                 {[...messages, ...messages].map((msg, i) => (

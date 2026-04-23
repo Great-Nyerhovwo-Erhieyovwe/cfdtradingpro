@@ -1,10 +1,13 @@
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-// import path from 'path';
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
+
+  // IMPORTANT for React Router in production
+  base: '/',
+
+  // Dev server (local only)
   server: {
     proxy: {
       '/api': {
@@ -14,19 +17,26 @@ export default defineConfig({
       },
     },
   },
+
+  // Production build settings
   build: {
-    outDir: 'dist', // Output directory for the build
-    chunkSizeWarningLimit: 1024000, // Increase the chunk size warning limit (in KB)
+    outDir: 'dist',
+    sourcemap: false,
+    emptyOutDir: true,
+
     rollupOptions: {
       output: {
-        manualChunks(id: string) {
-          icons: ['react-icons']
+        // SAFE production chunking (fixes blank page issues)
+        manualChunks(id) {
           if (id.includes('node_modules')) {
-            return 'vendor'; // All node_modules will be bundled into a single 'vendor' chunk
+            return 'vendor';
           }
         },
-        chunkFileNames: 'assets/js/[name]-[hash].js', // Custom chunk file naming
-      }
-    }
-  }
-})
+
+        chunkFileNames: 'assets/js/[name]-[hash].js',
+        entryFileNames: 'assets/js/[name]-[hash].js',
+        assetFileNames: 'assets/[ext]/[name]-[hash].[ext]',
+      },
+    },
+  },
+});

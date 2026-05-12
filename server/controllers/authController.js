@@ -7,8 +7,8 @@ import { query } from '../utils/db.js';
 const otpStore = new Map();
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || process.env.VITE_SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || process.env.VITE_SMTP_PORT || 587,
+    host: process.env.SMTP_HOST || process.env.VITE_SMTP_HOST || 'smtp.hostinger.com',
+    port: process.env.SMTP_PORT || process.env.VITE_SMTP_PORT || 465,
     secure: false,
     auth: {
         user: process.env.SMTP_USER || process.env.VITE_SMTP_USER,
@@ -24,7 +24,7 @@ function generateOTP() {
 
 async function sendOTPEmail(email, otp) {
     const mailOptions = {
-        from: process.env.EMAIL_FROM || process.env.VITE_EMAIL_FROM || 'cfdtradingpro@gmail.com',
+        from: process.env.EMAIL_FROM || process.env.VITE_EMAIL_FROM || 'support@cfdtradingpro.com',
         to: email,
         subject: 'CFD Trading Pro - Verification Code',
         text: `Your verification code is: ${otp}`,
@@ -54,21 +54,16 @@ export async function sendOtp(req, res) {
         console.log(`Generated OTP for ${email}: ${otp}`); // local dev only
         otpStore.set(email, { otp, ts: Date.now() });
         
-        // In development mode, allow proceeding without actually sending email
-        if (process.env.NODE_ENV !== 'production' && process.env.VITE_APP_ENV !== 'production') {
-            console.log(`📧 [DEV MODE] OTP would be sent to ${email}: ${otp}`);
-            return res.json({ success: true, devOtp: otp }); // Include OTP for testing/locally
-        } 
 
         // ===== FOR PRODUCTION =======
 
-        // if (process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production') {
-        //     console.log(`📧 [DEV MODE] OTP would be sent to ${email}: ${otp}`);
-        //     return res.json({ success: true, devOtp: otp }); // Include OTP for testing/locally
-        // } else {
-        //     await sendOTPEmail(email, otp);
-            //    return res.json({ success: true })
-        // }
+        if (process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production') {
+             await sendOTPEmail(email, otp);
+               return res.json({ success: true })
+        } else {
+            console.log(`📧 [DEV MODE] OTP would be sent to ${email}: ${otp}`);
+            return res.json({ success: true, devOtp: otp }); // Include OTP for testing/locally
+        }
         
         const sent = await sendOTPEmail(email, otp);
         if (!sent) return res.status(500).json({ message: 'Failed to send OTP' });

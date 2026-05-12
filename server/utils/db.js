@@ -12,15 +12,19 @@ export async function connectDB() {
         const tempPool = mysql.createPool({
             host: process.env.DB_HOST || process.env.VITE_DB_HOST,
             user: process.env.DB_USER || process.env.VITE_DB_USER,
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'cfdtradingprodb',
-            password: process.env.DB_PASS || process.env.VITE_DB_PASS || 'SilverWC@101',
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3307,
+            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro',
+            password: process.env.DB_PASS || process.env.VITE_DB_PASS,
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout...
+            ssl: {
+                rejectUnauthorized: true, // Ensure SSL is used and properly validated
+                ca: fs.readFileSync('./path/to/ca.pem').toString(), // Path to CA certificate if required by the server
+            }
         });
 
-        const dbName = process.env.DB_NAME || process.env.VITE_DB_NAME || 'cfdtradingprodb';
+        const dbName = process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro';
         
         // Create database if it doesn't exist
         console.log('🔍 Checking if database exists...');
@@ -31,12 +35,16 @@ export async function connectDB() {
         pool = mysql.createPool({
             host: process.env.DB_HOST || process.env.VITE_DB_HOST,
             user: process.env.DB_USER || process.env.VITE_DB_USER,
-            password: process.env.DB_PASS || process.env.VITE_DB_PASS || 'SilverWC@101',
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'cfdtradingprodb',
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3307,
+            password: process.env.DB_PASS || process.env.VITE_DB_PASS,
+            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro',
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout
+            ssl: {
+                rejectUnauthorized: true, // Ensure SSL is used and properly validated
+                ca: fs.readFileSync('./path/to/ca.pem').toString(), // Path to CA certificate if required by the server
+            }
         });
 
         // test connection with timeout

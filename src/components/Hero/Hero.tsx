@@ -10,7 +10,7 @@ const Counter = ({ label, value, icon }: { label: string; value: number; icon: R
 
     useEffect(() => {
         const controls = animate(count, value, {
-            duration: 2.5,
+            duration: 5.5,
             ease: "easeOut",
             onUpdate: (latest) => setDisplayValue(Math.round(latest))
         });

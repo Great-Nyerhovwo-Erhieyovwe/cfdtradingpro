@@ -12,9 +12,9 @@ export async function connectDB() {
         const tempPool = mysql.createPool({
             host: process.env.DB_HOST || process.env.VITE_DB_HOST,
             user: process.env.DB_USER || process.env.VITE_DB_USER,
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro',
+            database: process.env.DB_NAME || process.env.VITE_DB_NAME,
             password: process.env.DB_PASS || process.env.VITE_DB_PASS,
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 11822,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout...
@@ -24,7 +24,7 @@ export async function connectDB() {
             }
         });
 
-        const dbName = process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro';
+        const dbName = process.env.DB_NAME || process.env.VITE_DB_NAME;
         
         // Create database if it doesn't exist
         console.log('🔍 Checking if database exists...');
@@ -36,8 +36,8 @@ export async function connectDB() {
             host: process.env.DB_HOST || process.env.VITE_DB_HOST,
             user: process.env.DB_USER || process.env.VITE_DB_USER,
             password: process.env.DB_PASS || process.env.VITE_DB_PASS,
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME || 'u593860439_cfdtradingpro',
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 3306,
+            database: process.env.DB_NAME || process.env.VITE_DB_NAME,
+            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 11822,
             waitForConnections: true,
             connectionLimit: 10,
             connectTimeout: 5000, // 5 second timeout

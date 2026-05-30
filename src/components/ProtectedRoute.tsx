@@ -5,7 +5,7 @@ import { useAuthStatus } from "../hooks/useAuth";
 /**
  * ProtectedRoute - Protect user dashboard routes
  *
- * - Checks if user is logged in (token in localStorage)
+ * - Checks if user is logged in via backend cookie authentication
  * - Redirects to /login if not authenticated
  * - Shows loading while checking authentication
  * - Handles banned users (auto-logout)
@@ -24,7 +24,8 @@ export function ProtectedRoute({ element, isLoading = false }: ProtectedRoutePro
     return <Loading isLoading={true} message="Loading Dashboard..." fullScreen={true} />;
   }
 
-  // Not authenticated - redirect to login
+  // If not authenticated, redirect to login
+  // With cookie-based auth, isAuthenticated is based on localStorage.user
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }

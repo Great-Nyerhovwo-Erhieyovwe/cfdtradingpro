@@ -3,8 +3,7 @@ import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
 import { useAuthStatus } from "../../hooks/useAuth";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { fetchJson, apiFetch } from "../../api/client";
 
 const parseCurrencyValue = (value: any, fallback: number = 0) => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -54,28 +53,12 @@ const TradePageContent: React.FC = () => {
   // FETCH DATA
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const [portfolioRes, tradesRes, userRes] = await Promise.all([
-          fetch(`${backendUrl}/api/dashboard/portfolio`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/requests/trades`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/dashboard/user`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        const [portfolio, trades, user] = await Promise.all([
+          fetchJson('/api/dashboard/portfolio'),
+          fetchJson('/api/requests/trades'),
+          fetchJson('/api/dashboard/user'),
         ]);
-
-        const portfolio = await portfolioRes.json();
-        const trades = await tradesRes.json();
-        const user = await userRes.json();
 
         setAvailableBalance(portfolio.totalBalance || portfolio.balanceUsd || 0);
         setCurrency(user.currency || "USD");
@@ -114,14 +97,10 @@ const TradePageContent: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${backendUrl}/api/requests/trade`, {
+      const data = await apiFetch('/api/requests/trade', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount: parsedAmount,
@@ -130,8 +109,6 @@ const TradePageContent: React.FC = () => {
           leverage,
         }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setModal({
@@ -142,24 +119,18 @@ const TradePageContent: React.FC = () => {
         });
         setAmount("");
 
-        setTimeout(() => {
-          const token = localStorage.getItem("token");
-          Promise.all([
-            fetch(`${backendUrl}/api/dashboard/portfolio`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }).then((r) => r.json()),
-            fetch(`${backendUrl}/api/requests/trades`, {
-              headers: { Authorization: `Bearer ${token}` },
-            }).then((r) => r.json()),
-          ]).then(([portfolio, trades]) => {
-            setAvailableBalance(portfolio.totalBalance || portfolio.balanceUsd || 0);
-            if (trades.success) {
-              const sorted = trades.trades.sort(
-                (a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
-              );
-              setRecentTrades(sorted.slice(0, 5));
-            }
-          });
+        setTimeout(async () => {
+          const [portfolio, trades] = await Promise.all([
+            fetchJson('/api/dashboard/portfolio'),
+            fetchJson('/api/requests/trades'),
+          ]);
+          setAvailableBalance(portfolio.totalBalance || portfolio.balanceUsd || 0);
+          if (trades.success) {
+            const sorted = trades.trades.sort(
+              (a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+            );
+            setRecentTrades(sorted.slice(0, 5));
+          }
         }, 1000);
       } else {
         setModal({ isOpen: true, title: "Trade Failed", message: data.message || "Failed to execute trade", type: "error" });
@@ -365,17 +336,9 @@ export const TradePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadUserProfile = async () => {
+      try {
+        const d = await fetchJson('/api/dashboard/user');
         if (d) {
           setUserProfile({
             name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
@@ -383,9 +346,14 @@ export const TradePage: React.FC = () => {
             isVerified: d.emailVerified || false,
           });
         }
+      } catch {
+        // auth handled by interceptor
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadUserProfile();
   }, []);
 
   if (loading) return null;

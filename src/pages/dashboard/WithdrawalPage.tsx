@@ -3,8 +3,7 @@ import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
 import { useAuthStatus } from "../../hooks/useAuth";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { fetchJson, apiFetch } from "../../api/client";
 
 const parseCurrencyValue = (value: any, fallback: number = 0) => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -100,29 +99,12 @@ const WithdrawalPageContent: React.FC = () => {
   // FETCH DATA
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoading(false);
-         return window.location.href = '/login';
-        // return;
-      }
-
       try {
-        const [portfolioRes, withdrawalsRes, userRes] = await Promise.all([
-          fetch(`${backendUrl}/api/dashboard/portfolio`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/requests/withdrawals`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/dashboard/user`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        const [portfolio, withdrawals, user] = await Promise.all([
+          fetchJson('/api/dashboard/portfolio'),
+          fetchJson('/api/requests/withdrawals'),
+          fetchJson('/api/dashboard/user'),
         ]);
-
-        const portfolio = await portfolioRes.json();
-        const withdrawals = await withdrawalsRes.json();
-        const user = await userRes.json();
 
         setCurrency(user.currency || "USD");
 
@@ -237,18 +219,14 @@ const WithdrawalPageContent: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token");
-
       const withdrawalAmount = parseFloat(amount);
       const destinationAddr = selectedMethod === "crypto" ? walletAddress : 
                               selectedMethod === "bank" ? JSON.stringify(bankDetails) : null;
 
-      const response = await fetch(`${backendUrl}/api/requests/withdrawal`, {
+      const data = await apiFetch('/api/requests/withdrawal', {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount: withdrawalAmount,
@@ -256,8 +234,6 @@ const WithdrawalPageContent: React.FC = () => {
           destinationAddress: destinationAddr,
         }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setModal({
@@ -271,20 +247,14 @@ const WithdrawalPageContent: React.FC = () => {
         });
         setAmount("");
 
-        setTimeout(() => {
-          const token = localStorage.getItem("token");
-          fetch(`${backendUrl}/api/requests/withdrawals`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-            .then((r) => r.json())
-            .then((d) => {
-              if (d.success) {
-                const sorted = d.withdrawals.sort(
-                  (a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
-                );
-                setRecentWithdrawals(sorted.slice(0, 5));
-              }
-            });
+        setTimeout(async () => {
+          const d = await fetchJson('/api/requests/withdrawals');
+          if (d.success) {
+            const sorted = d.withdrawals.sort(
+              (a: any, b: any) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+            );
+            setRecentWithdrawals(sorted.slice(0, 5));
+          }
         }, 1000);
       } else {
         setModal({
@@ -541,20 +511,9 @@ export const WithdrawalPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 2000);
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadUserProfile = async () => {
+      try {
+        const d = await fetchJson('/api/dashboard/user');
         if (d) {
           setUserProfile({
             name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
@@ -562,9 +521,14 @@ export const WithdrawalPage: React.FC = () => {
             isVerified: d.emailVerified || false,
           });
         }
+      } catch {
+        // auth handled by interceptor
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadUserProfile();
   }, []);
 
   if (loading) return null;

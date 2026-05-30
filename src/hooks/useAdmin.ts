@@ -1,10 +1,9 @@
 import { useState, useCallback } from 'react';
+import { fetchJson } from '../api/client';
 import type {
     User, Deposit, Withdrawal, Trade, UpgradeRequest,
     VerificationRequest, AdminStats, Message, AdminTab
 } from '../types/admin';
-
-const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 interface UseAdminReturn {
   // Data
@@ -49,26 +48,13 @@ export const useAdmin = (): UseAdminReturn => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const getToken = () => localStorage.getItem('token');
-
-  const fetchWithAuth = async (endpoint: string, options?: RequestInit) => {
-    const token = getToken();
-    if (!token) throw new Error('No authentication token');
-
-    const response = await fetch(`${backendUrl}${endpoint}`, {
-      ...options,
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        ...options?.headers,
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+  const fetchWithAuth = async (endpoint: string, options?: any) => {
+    // Ensure admin helper always calls the API prefix
+    let url = endpoint;
+    if (!url.startsWith('/api')) {
+      url = (endpoint.startsWith('/') ? '/api' + endpoint : '/api/' + endpoint);
     }
-
-    return response.json();
+    return await fetchJson(url, options);
   };
 
   const refreshData = useCallback(async (tab: AdminTab) => {

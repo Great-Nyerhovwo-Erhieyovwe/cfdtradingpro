@@ -68,6 +68,8 @@ export const provider = {
             normalizedFilter[key === '_id' ? 'id' : key] = filter[key];
         }
 
+        console.log(`provider.findOne called for collection=${collection} filter=${JSON.stringify(normalizedFilter)}`);
+
         // Try MariaDB first
         const db = getDb();
         if (db) {

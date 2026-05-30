@@ -4,9 +4,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineLoading3Quarters } from 'react-icons/ai'
 import { HiCheckCircle } from 'react-icons/hi'
+import { api } from '../../../api/client'
 // import { Footer } from '../../../components/Footer/Footer'
-
-const backendUrl = import.meta.env.VITE_API_URL;
 
 const Login = () => {
     const [email, setEmail] = useState('')
@@ -16,9 +15,9 @@ const Login = () => {
     const [showModal, setShowModal] = useState(false)
     const [successModal, setSuccessModal] = useState(false)
     const [errors, setErrors] = useState<{ email?: string; password?: string }>({})
-    const [chartBars, setChartBars] = useState(Array(30).fill(0).map(() => Math.random() * 80 + 20))
+    // const [chartBars, setChartBars] = useState(Array(30).fill(0).map(() => Math.random() * 80 + 20))
 
-    console.log(chartBars);
+    // console.log(chartBars);
 
     // Form validation
     const validateForm = () => {
@@ -49,44 +48,31 @@ const Login = () => {
         setIsLoading(true)
         
         // Animate chart bars during loading
-        const animationInterval = setInterval(() => {
-            setChartBars(prev => prev.map(() => Math.random() * 80 + 20))
-        }, 100)
+        // const animationInterval = setInterval(() => {
+        //     setChartBars(prev => prev.map(() => Math.random() * 80 + 20))
+        // }, 100)
 
         try {
-            // Call actual API
-            // Note: backendUrl already includes /api, so we only add /auth/login
-            console.log('🔄 User login attempt with email:', email);
-            console.log('🔗 API endpoint:', `${backendUrl}/api/auth/login`);
-            const response = await fetch(`${backendUrl}/api/auth/login`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
-            })
+            console.log('🔄 User login attempt with email:', email)
+            const { data } = await api.post('/api/auth/login', { email, password })
             
-            const data = await response.json()
+            // clearInterval(animationInterval)
+            console.log('📡 Login response data:', data)
             
-            clearInterval(animationInterval)
-            console.log('📡 Login response status:', response.status);
-            console.log('📡 Login response data:', data);
-            
-            if (response.ok && data.token) {
-                // Save token and user info
-                console.log('✅ Login successful, saving token and redirecting...');
-                localStorage.setItem('token', data.token)
-                localStorage.setItem('user', JSON.stringify(data.user))
+            if (data?.user) {
+                try {
+                    localStorage.setItem('user', JSON.stringify(data.user))
+                } catch {}
                 setSuccessModal(true)
-                
-                // Redirect to dashboard after showing success message
                 setTimeout(() => {
                     window.location.href = '/dashboard'
                 }, 2000)
             } else {
                 setIsLoading(false)
-                setErrors({ email: data.message || 'Invalid credentials' })
+                setErrors({ email: data?.message || 'Invalid credentials' })
             }
         } catch (error) {
-            clearInterval(animationInterval)
+            // clearInterval(animationInterval)
             setIsLoading(false)
             setErrors({ email: 'Network error. Please try again.' })
         }

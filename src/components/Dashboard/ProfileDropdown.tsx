@@ -23,7 +23,10 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({
 
   const handleLogout = () => {
     onLogout?.();
-    localStorage.removeItem("authToken");
+    try {
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("user");
+    } catch {}
     navigate("/login");
   };
 

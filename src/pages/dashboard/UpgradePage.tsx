@@ -3,6 +3,7 @@ import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
 import { useAuthStatus } from "../../hooks/useAuth";
+import { fetchJson, apiFetch } from "../../api/client";
 
 interface Plan {
   id: string;
@@ -19,8 +20,6 @@ interface Plan {
     frequencyDays: number;
   }
 }
-
-const backendUrl = import.meta.env.VITE_API_URL;
 
 const UpgradePageContent: React.FC = () => {
   // const [selectedPlan, setSelectedPlan] = useState<string>("");
@@ -118,36 +117,23 @@ const UpgradePageContent: React.FC = () => {
 
   // FETCH DATA ON MOUNT
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setIsLoading(false);
-      return;
-    }
+    const loadData = async () => {
+      try {
+        const [portfolio, upgrades, user] = await Promise.all([
+          fetchJson("/api/dashboard/portfolio"),
+          fetchJson("/api/requests/upgrades"),
+          fetchJson("/api/dashboard/user"),
+        ]);
 
-    Promise.all([
-      fetch(`${backendUrl}/api/dashboard/portfolio`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
-      fetch(`${backendUrl}/api/requests/upgrades`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
-      fetch(`${backendUrl}/api/dashboard/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
-    ])
-      .then(([portfolio, upgrades, user]) => {
-        // Set current plan from portfolio
-        if (portfolio.upgradeLevel) {
+        if (portfolio?.upgradeLevel) {
           setCurrentPlan(portfolio.upgradeLevel);
         }
 
-        // Set currency from user
-        if (user && user.currency) {
+        if (user?.currency) {
           setCurrency(user.currency);
         }
 
-        // Set upgrade history
-        if (upgrades.success && upgrades.upgrades) {
+        if (upgrades?.success && upgrades.upgrades) {
           const sorted = upgrades.upgrades.sort(
             (a: any, b: any) =>
               new Date(b.requestedAt).getTime() -
@@ -155,9 +141,14 @@ const UpgradePageContent: React.FC = () => {
           );
           setUpgradeHistory(sorted.slice(0, 5));
         }
-      })
-      .catch((err) => console.error("Failed to fetch data:", err))
-      .finally(() => setIsLoading(false));
+      } catch (err) {
+        console.error("Failed to fetch data:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    }; 
+
+    loadData();
   }, []);
 
   useEffect(() => {
@@ -191,21 +182,12 @@ const UpgradePageContent: React.FC = () => {
     // const user = { upgradeLevel: currentPlan }
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${backendUrl}/api/requests/upgrade`, {
+      const data = await apiFetch("/api/requests/upgrade", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           upgradeLevel: planId,
         }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         const targetPlan = plans.find((p) => p.id === planId);
@@ -217,22 +199,20 @@ const UpgradePageContent: React.FC = () => {
         });
 
         // Refresh upgrade history
-        setTimeout(() => {
-          const token = localStorage.getItem("token");
-          fetch(`${backendUrl}/api/requests/upgrades`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-            .then((r) => r.json())
-            .then((d) => {
-              if (d.success && d.upgrades) {
-                const sorted = d.upgrades.sort(
-                  (a: any, b: any) =>
-                    new Date(b.requestedAt).getTime() -
-                    new Date(a.requestedAt).getTime()
-                );
-                setUpgradeHistory(sorted.slice(0, 5));
-              }
-            });
+        setTimeout(async () => {
+          try {
+            const refreshed = await fetchJson("/api/requests/upgrades");
+            if (refreshed?.success && refreshed.upgrades) {
+              const sorted = refreshed.upgrades.sort(
+                (a: any, b: any) =>
+                  new Date(b.requestedAt).getTime() -
+                  new Date(a.requestedAt).getTime()
+              );
+              setUpgradeHistory(sorted.slice(0, 5));
+            }
+          } catch (refreshError) {
+            console.error("Failed to refresh upgrade history:", refreshError);
+          }
         }, 1000);
       } else {
         setModal({
@@ -509,23 +489,22 @@ export const UpgradePage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      return;
-    };
-
-    fetch(`${backendUrl}/api/dashboard/user`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(r => r.json())
-      .then(d => {
-        if (d) {
+    const loadProfile = async () => {
+      try {
+        const user = await fetchJson("/api/dashboard/user");
+        if (user) {
           setUserProfile({
-            name: `${d.firstName || ''} ${d.lastName || ''}`.trim() || 'User',
-            email: d.email || '',
-            isVerified: d.emailVerified
+            name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User",
+            email: user.email || "",
+            isVerified: user.emailVerified,
           });
         }
-      })
-      .catch(() => {});
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+      }
+    };
+
+    loadProfile();
   }, []);
 
   return (

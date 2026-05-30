@@ -6,16 +6,13 @@ export function useLogin() {
   return useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
       const response = await api.post("/api/auth/login", credentials);
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-      }
       return response.data;
     },
     onSuccess: (data) => {
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-        window.location.href = "/dashboard";
+      if (data?.user) {
+        try { localStorage.setItem("user", JSON.stringify(data.user)); } catch {}
       }
+      window.location.href = "/dashboard";
     },
   });
 }
@@ -25,13 +22,12 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      // await api.post("/api/auth/logout");
+      try { localStorage.removeItem("user"); } catch {}
       return { success: true };
     },
     onSuccess: () => {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
+      try { localStorage.removeItem("user"); } catch {}
       queryClient.clear();
       window.location.href = "/";
     },
@@ -47,7 +43,6 @@ export function useCurrentUser() {
   });
 }
 
-// Hook to check user status periodically and handle auto-logout
 interface AuthStatus {
   isAuthenticated: boolean;
   isBanned: boolean;
@@ -63,38 +58,18 @@ export const useAuthStatus = (): AuthStatus => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const response = await fetch('/api/dashboard/user', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const user = await response.json();
-
-        if (response.ok && user) {
+        const { data } = await api.get("/api/auth/me");
+        if (data) {
           setIsAuthenticated(true);
-          setIsBanned(user.banned || false);
-          setIsFrozen(user.frozen || false);
-
-          if (user.banned) {
-            // Auto logout banned users
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-          }
-        } else {
-          // Invalid token or error
-          localStorage.removeItem('token');
-          setIsAuthenticated(false);
+          setIsBanned(data.banned || false);
+          setIsFrozen(data.frozen || false);
+          return;
         }
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        localStorage.removeItem('token');
+      } catch {
         setIsAuthenticated(false);
+        setIsBanned(false);
+        setIsFrozen(false);
       } finally {
         setIsLoading(false);
       }

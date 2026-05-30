@@ -31,7 +31,43 @@ export async function adminSummary(req, res) {
     const [totalWithdrawalsResult] = await db.query('SELECT COALESCE(SUM(amount), 0) as total FROM withdrawals WHERE status = "approved"');
     const totalWithdrawals = Number(totalWithdrawalsResult[0].total);
 
-    return res.json({ totalUsers, verifiedUsers, activeUsers, totalDeposits, totalWithdrawals });
+    // Get active trades count
+    const [activeTradesResult] = await db.query('SELECT COUNT(*) as count FROM trades WHERE status = "active"');
+    const activeTrades = activeTradesResult[0].count;
+
+    // Get total trading volume
+    const [totalVolumeResult] = await db.query('SELECT COALESCE(SUM(amount), 0) as total FROM trades');
+    const totalVolume = Number(totalVolumeResult[0].total);
+
+    // Get pending deposits count
+    const [pendingDepositsResult] = await db.query('SELECT COUNT(*) as count FROM deposits WHERE status = "pending"');
+    const pendingDeposits = pendingDepositsResult[0].count;
+
+    // Get pending withdrawals count
+    const [pendingWithdrawalsResult] = await db.query('SELECT COUNT(*) as count FROM withdrawals WHERE status = "pending"');
+    const pendingWithdrawals = pendingWithdrawalsResult[0].count;
+
+    // Get pending verifications count
+    const [pendingVerificationsResult] = await db.query('SELECT COUNT(*) as count FROM verifications WHERE status = "pending"');
+    const pendingVerifications = pendingVerificationsResult[0].count;
+
+    // Get pending upgrades count
+    const [pendingUpgradesResult] = await db.query('SELECT COUNT(*) as count FROM upgrades WHERE status = "pending"');
+    const pendingUpgrades = pendingUpgradesResult[0].count;
+
+    return res.json({ 
+      totalUsers, 
+      verifiedUsers, 
+      activeUsers, 
+      totalDeposits, 
+      totalWithdrawals,
+      activeTrades,
+      totalVolume,
+      pendingDeposits,
+      pendingWithdrawals,
+      pendingVerifications,
+      pendingUpgrades
+    });
   } catch (e) {
     console.error('Admin summary error:', e);
     return res.status(500).json({ message: 'Server error' });
@@ -69,8 +105,24 @@ export async function adminLogin(req, res) {
         console.log('❌ User is not admin, role:', user.role);
         return res.status(403).json({ message: 'Not authorized as admin' });
       }
-      const sub = (user._id || user.id)?.toString() || user.email;
-      const token = jwt.sign({ sub, role: 'admin' }, process.env.JWT_SECRET || process.env.VITE_JWT_SECRET, { expiresIn: process.env.JWT_EXPIRES_IN || process.env.VITE_JWT_EXPIRES_IN || '24h' });
+      // Prefer numeric subject for consistency with authenticate middleware
+      const sub = Number(user.id || user._id || 0);
+      const token = jwt.sign(
+        { sub, role: 'admin' },
+        process.env.JWT_SECRET || process.env.VITE_JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || process.env.VITE_JWT_EXPIRES_IN || '24h' }
+      );
+
+      // Set httpOnly cookie for admin sessions as well
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production',
+        sameSite: process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production' ? 'None' : 'Lax',
+        domain: process.env.COOKIE_DOMAIN || undefined,
+        maxAge: 24 * 60 * 60 * 1000, // 24 hours
+        path: '/',
+      });
+
       return res.json({ success: true, token, user: { id: sub, email: user.email, role: 'admin' } });
     }
 

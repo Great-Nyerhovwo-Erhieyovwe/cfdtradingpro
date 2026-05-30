@@ -1,70 +1,74 @@
-import mysql from 'mysql2/promise';
+﻿import mysql from 'mysql2/promise';
 
-// MariaDB/MySQL helper: connect and expose `db` instance..
 let pool = null;
 let db = null;
 
+const parseBoolean = (value) => ['1', 'true', 'TRUE', 'yes', 'YES'].includes(String(value).trim());
+
 export async function connectDB() {
-    // if (!uri) return null;
-    try {
-        console.log('🔄 Attempting to connect to MariaDB...');
-        // First connect without database to create it if needed
-        const tempPool = mysql.createPool({
-            host: process.env.DB_HOST || process.env.VITE_DB_HOST,
-            user: process.env.DB_USER || process.env.VITE_DB_USER,
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME,
-            password: process.env.DB_PASS || process.env.VITE_DB_PASS,
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 11822,
-            waitForConnections: true,
-            connectionLimit: 10,
-            connectTimeout: 5000, // 5 second timeout...
-            ssl: {
-                rejectUnauthorized: true, // Ensure SSL is used and properly validated
-                ca: fs.readFileSync('./path/to/ca.pem').toString(), // Path to CA certificate if required by the server
-            }
-        });
+    const host = process.env.DB_HOST || process.env.VITE_DB_HOST || 'localhost';
+    const user = process.env.DB_USER || process.env.VITE_DB_USER || 'root';
+    const password = process.env.DB_PASS || process.env.VITE_DB_PASS || '';
+    const database = process.env.DB_NAME || process.env.VITE_DB_NAME || '';
+    const port = Number(process.env.DB_PORT || process.env.VITE_DB_PORT || 3306);
+    const connectTimeout = Number(process.env.DB_CONNECT_TIMEOUT || process.env.VITE_DB_CONNECT_TIMEOUT || 10000);
+    const useSsl = parseBoolean(process.env.DB_SSL || process.env.VITE_DB_SSL || '');
 
-        const dbName = process.env.DB_NAME || process.env.VITE_DB_NAME;
-        
-        // Create database if it doesn't exist
-        console.log('🔍 Checking if database exists...');
-        await tempPool.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-        await tempPool.end();
+    const commonConfig = {
+        host,
+        user,
+        password,
+        port,
+        waitForConnections: true,
+        connectionLimit: 10,
+        connectTimeout,
+        ...(useSsl ? { ssl: { rejectUnauthorized: parseBoolean(process.env.DB_SSL_REJECT_UNAUTHORIZED || process.env.VITE_DB_SSL_REJECT_UNAUTHORIZED || 'false') } } : {}),
+    };
 
-        // Now connect to the specific database
-        pool = mysql.createPool({
-            host: process.env.DB_HOST || process.env.VITE_DB_HOST,
-            user: process.env.DB_USER || process.env.VITE_DB_USER,
-            password: process.env.DB_PASS || process.env.VITE_DB_PASS,
-            database: process.env.DB_NAME || process.env.VITE_DB_NAME,
-            port: process.env.DB_PORT || process.env.VITE_DB_PORT || 11822,
-            waitForConnections: true,
-            connectionLimit: 10,
-            connectTimeout: 5000, // 5 second timeout
-            ssl: {
-                rejectUnauthorized: true, // Ensure SSL is used and properly validated
-                ca: fs.readFileSync('./path/to/ca.pem').toString(), // Path to CA certificate if required by the server
-            }
-        });
+    const createPoolAndTest = async (config) => {
+        const candidate = mysql.createPool(config);
+        try {
+            const conn = await Promise.race([
+                candidate.getConnection(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), connectTimeout)),
+            ]);
+            conn.release();
+            return candidate;
+        } catch (error) {
+            await candidate.end().catch(() => {});
+            throw error;
+        }
+    };
 
-        // test connection with timeout
-        console.log('🔌 Testing database connection...');
-        const conn = await Promise.race([
-            pool.getConnection(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error('Connection timeout')), 5000))
-        ]);
-        conn.release();
-
-        db = pool;
-
-        console.log("✅ Connected to MariaDB");
-        return db;
-
-    } catch (err) {
-        console.error("⚠️  MariaDB connection error:", err.message || err);
+    if (!database) {
+        console.error('❌ Database name is not configured; cannot establish MariaDB connection.');
         pool = null;
         db = null;
-        console.log('💾 Will use fallback db.json instead');
+        return null;
+    }
+
+    try {
+        console.log('🔄 Attempting MariaDB connection with configured database...');
+        pool = await createPoolAndTest({ ...commonConfig, database });
+        db = pool;
+        console.log('✅ Connected to MariaDB database:', database);
+        return db;
+    } catch (error) {
+        console.warn('⚠️  Direct MariaDB connection failed:', error.message || error);
+    }
+
+    try {
+        console.log('🔄 Attempting MariaDB connection without database for cPanel compatibility...');
+        pool = await createPoolAndTest(commonConfig);
+        await pool.query('USE `' + database + '`');
+        db = pool;
+        console.log('✅ Connected to MariaDB and selected database:', database);
+        return db;
+    } catch (error) {
+        console.error('⚠️  MariaDB fallback connection failed:', error.message || error);
+        await pool?.end().catch(() => {});
+        pool = null;
+        db = null;
         return null;
     }
 }
@@ -73,7 +77,6 @@ export function getDb() {
     return db;
 }
 
-// Query helper (VERY IMPORTANT)
 export async function query(sql, params = []) {
     if (!pool) {
         console.error('❌ Database pool not connected');
@@ -83,7 +86,7 @@ export async function query(sql, params = []) {
     try {
         console.log('🔍 Executing query:', sql, 'with params:', params);
         const [rows] = await pool.execute(sql, params);
-        console.log('✅ Query successful, returned', rows.length, 'rows');
+        console.log('✅ Query successful, returned', Array.isArray(rows) ? rows.length : 'unknown', 'rows');
         return rows;
     } catch (err) {
         console.error('❌ Query execution error:', err.message || err);
@@ -96,11 +99,8 @@ export async function query(sql, params = []) {
 export async function closeDB() {
     if (pool) {
         await pool.end();
-        console.log("MariaDB connection closed");
+        console.log('MariaDB connection closed');
     }
     pool = null;
     db = null;
 }
-
-
-export default db;

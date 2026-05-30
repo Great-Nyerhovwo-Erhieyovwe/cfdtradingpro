@@ -12,12 +12,7 @@
  */
 
 import { useState, useEffect } from 'react';
-
-/**
- * Backend URL configuration
- * Uses environment variable or defaults to localhost
- */
-const backendUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
+import { fetchJson } from '../api/client';
 
 /**
  * User Profile Interface
@@ -160,21 +155,11 @@ export function useDashboard() {
    * Fetch user profile from backend
    * GET /api/dashboard/user
    */
-  const fetchUser = async (token: string) => {
+  const fetchUser = async () => {
     try {
-      const response = await fetch(`${backendUrl}/api/dashboard/user`, {
+      const data = await fetchJson('/api/dashboard/user', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       setUser(data);
       return data;
     } catch (err) {
@@ -187,21 +172,11 @@ export function useDashboard() {
    * Fetch portfolio metrics from backend
    * GET /api/dashboard/portfolio
    */
-  const fetchPortfolio = async (token: string) => {
+  const fetchPortfolio = async () => {
     try {
-      const response = await fetch(`${backendUrl}/api/dashboard/portfolio`, {
+      const data = await fetchJson('/api/dashboard/portfolio', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       setPortfolio(data);
       return data;
     } catch (err) {
@@ -214,50 +189,15 @@ export function useDashboard() {
    * Fetch transaction history from backend
    * GET /api/requests/deposits and /api/requests/withdrawals
    */
-  const fetchTransactions = async (token: string, limit = 50, offset = 0) => {
+  const fetchTransactions = async (_token?: string, limit = 50, offset = 0) => {
     try {
-      // First get user to know the currency
-      const userResponse = await fetch(`${backendUrl}/api/dashboard/user`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!userResponse.ok) {
-        throw new Error(`HTTP error! status: ${userResponse.status}`);
-      }
-
-      const userData = await userResponse.json();
+      const userData = await fetchJson('/api/dashboard/user', { method: 'GET' });
       const userCurrency = userData.currency || 'USD';
 
       console.log('User currency for transactions:', userCurrency);
 
-      // Fetch deposits
-      const depositsResponse = await fetch(`${backendUrl}/api/requests/deposits`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      // Fetch withdrawals
-      const withdrawalsResponse = await fetch(`${backendUrl}/api/requests/withdrawals`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!depositsResponse.ok || !withdrawalsResponse.ok) {
-        throw new Error(`HTTP error! deposits: ${depositsResponse.status}, withdrawals: ${withdrawalsResponse.status}`);
-      }
-
-      const depositsData = await depositsResponse.json();
-      const withdrawalsData = await withdrawalsResponse.json();
+      const depositsData = await fetchJson('/api/requests/deposits', { method: 'GET' });
+      const withdrawalsData = await fetchJson('/api/requests/withdrawals', { method: 'GET' });
 
       // Transform deposits to Transaction format
       const deposits = (depositsData.deposits || []).map((d: any) => ({
@@ -303,24 +243,11 @@ export function useDashboard() {
    * Fetch notifications from backend
    * GET /api/dashboard/notifications?unreadOnly=false
    */
-  const fetchNotifications = async (token: string, unreadOnly = false) => {
+  const fetchNotifications = async (_token?: string, unreadOnly = false) => {
     try {
-      const response = await fetch(
-        `${backendUrl}/api/dashboard/notifications?unreadOnly=${unreadOnly}`,
-        {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await fetchJson(`/api/dashboard/notifications?unreadOnly=${unreadOnly}`, {
+        method: 'GET',
+      });
       setNotifications(data.notifications || []);
       return data;
     } catch (err) {
@@ -333,21 +260,11 @@ export function useDashboard() {
    * Fetch dashboard statistics from backend
    * GET /api/dashboard/stats
    */
-  const fetchStats = async (token: string) => {
+  const fetchStats = async () => {
     try {
-      const response = await fetch(`${backendUrl}/api/dashboard/stats`, {
+      const data = await fetchJson('/api/dashboard/stats', {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
       });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
       setStats(data);
       return data;
     } catch (err) {
@@ -370,30 +287,16 @@ export function useDashboard() {
   useEffect(() => {
     const initializeDashboard = async () => {
       try {
-        // Get JWT token from localStorage (set during login)
-        const token = localStorage.getItem('token');
-        
-        if (!token) {
-          // User not logged in, redirect to login page
-          setError('No authentication token found');
-          setLoading(false);
-window.location.href = "/login";
-          return;
-        }
-
-        // Fetch all dashboard data in parallel using Promise.all
-        // This is more efficient than fetching sequentially
         await Promise.all([
-          fetchUser(token),
-          fetchPortfolio(token),
-          fetchTransactions(token),
-          fetchNotifications(token),
-          fetchStats(token)
+          fetchUser(),
+          fetchPortfolio(),
+          fetchTransactions(),
+          fetchNotifications(),
+          fetchStats(),
         ]);
 
         setLoading(false);
       } catch (err) {
-        // Handle errors from any of the fetches
         console.error('Dashboard initialization error:', err);
         setError(err instanceof Error ? err.message : 'Failed to load dashboard');
         setLoading(false);
@@ -421,26 +324,11 @@ window.location.href = "/login";
     
     // Refetch functions (for manual updates)
     refetch: {
-      user: () => {
-        const token = localStorage.getItem('token');
-        if (token) return fetchUser(token);
-      },
-      portfolio: () => {
-        const token = localStorage.getItem('token');
-        if (token) return fetchPortfolio(token);
-      },
-      transactions: () => {
-        const token = localStorage.getItem('token');
-        if (token) return fetchTransactions(token);
-      },
-      notifications: () => {
-        const token = localStorage.getItem('token');
-        if (token) return fetchNotifications(token);
-      },
-      stats: () => {
-        const token = localStorage.getItem('token');
-        if (token) return fetchStats(token);
-      }
+      user: () => fetchUser(),
+      portfolio: () => fetchPortfolio(),
+      transactions: () => fetchTransactions(),
+      notifications: () => fetchNotifications(),
+      stats: () => fetchStats(),
     }
   };
 }

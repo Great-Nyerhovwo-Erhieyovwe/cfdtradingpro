@@ -32,6 +32,7 @@ import 'dotenv/config';                    // Load environment variables from .e
 import express from 'express';              // Web framework
 import cors from 'cors';                    // Cross-Origin Resource Sharing
 import helmet from 'helmet';                // Security headers
+import cookieParser from 'cookie-parser';   // Parse cookies
 import routes from './routes/index.js';     // API routes
 import { connectDB } from './utils/db.js'; // MariaDB utilities
 import { provider } from './services/dataProvider.js'; // Data provider (MariaDB/JSON)
@@ -53,6 +54,9 @@ import { dirname } from 'path';
 const app = express();
 // const PORT = process.env.PORT || 4000;
 
+// Trust Proxy for HarmonWeb/Cpanel
+app.enable('trust proxy');
+
 // ============================================
 // CORS CONFIGURATION
 // ============================================
@@ -61,7 +65,7 @@ const app = express();
 const FRONTEND_ORIGIN = 
     process.env.FRONTEND_ORIGIN || 
     process.env.VITE_FRONTEND_ORIGIN || 
-    'https://localhost:5173';
+    (process.env.NODE_ENV === 'development' ? 'http://localhost:5173' : 'https://cfdtradingpro.com');
 
 // Configure CORS to allow requests from frontend
 // credentials: true allows cookies to be sent with requests
@@ -81,6 +85,22 @@ app.use(express.json());
 
 // Parse URL-encoded request bodies (e.g., form submissions)
 app.use(express.urlencoded({ extended: true }));
+
+// Parse cookies from request headers
+app.use(cookieParser());
+
+// Simple request logger for debugging incoming API calls
+app.use((req, res, next) => {
+    try {
+        console.log(`--> ${req.method} ${req.originalUrl}`);
+        if (req.method !== 'GET') {
+            console.log('    Body:', JSON.stringify(req.body));
+        }
+    } catch (e) {
+        // ignore logging errors
+    }
+    next();
+});
 
 // ============================================
 // API ROUTES
@@ -107,11 +127,11 @@ const __dirname = dirname(__filename);
 // ============================================
 
 // 1. Serve static files (JS, CSS, images)
-app.use(express.static(path.join(__dirname, 'dist')));
+app.use(express.static(path.join(__dirname, '../dist')));
 
 // 2. SPA fallback (VERY IMPORTANT FIX)
 app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+    res.sendFile(path.join(__dirname, '../dist', 'index.html'));
 });
 
 // ============================================
@@ -137,7 +157,7 @@ async function initializeSchema(db) {
         // Create tables if they don't exist
         const tables = [
             `CREATE TABLE IF NOT EXISTS users (
-                id VARCHAR(36) PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 email VARCHAR(255) UNIQUE NOT NULL,
                 password VARCHAR(255),
                 firstName VARCHAR(100),
@@ -163,10 +183,10 @@ async function initializeSchema(db) {
                 verificationApprovedAt DATETIME,
                 upgradeLevel VARCHAR(50) DEFAULT 'free'
             )`,
-            `ALTER TABLE users MODIFY COLUMN id VARCHAR(36) PRIMARY KEY`,
+            `ALTER TABLE users MODIFY COLUMN id INT AUTO_INCREMENT PRIMARY KEY`,
             `CREATE TABLE IF NOT EXISTS transactions (
-                id VARCHAR(36) PRIMARY KEY,
-                userId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userId INT NOT NULL,
                 amount DECIMAL(15,2),
                 currency VARCHAR(10),
                 type ENUM('deposit', 'withdrawal'),
@@ -183,8 +203,8 @@ async function initializeSchema(db) {
                 FOREIGN KEY (userId) REFERENCES users(id)
             )`,
             `CREATE TABLE IF NOT EXISTS trades (
-                id VARCHAR(36) PRIMARY KEY,
-                userId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userId INT NOT NULL,
                 symbol VARCHAR(50),
                 type ENUM('buy', 'sell'),
                 status ENUM('active', 'closed', 'cancelled') DEFAULT 'active',
@@ -203,8 +223,8 @@ async function initializeSchema(db) {
                 FOREIGN KEY (userId) REFERENCES users(id)
             )`,
             `CREATE TABLE IF NOT EXISTS verifications (
-                id VARCHAR(36) PRIMARY KEY,
-                userId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userId INT NOT NULL,
                 status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
                 documentType VARCHAR(50),
                 documentNumber VARCHAR(255),
@@ -223,7 +243,7 @@ async function initializeSchema(db) {
                 FOREIGN KEY (userId) REFERENCES users(id)
             )`,
             `CREATE TABLE IF NOT EXISTS upgrade_plans (
-                id VARCHAR(36) PRIMARY KEY,
+                id INT AUTO_INCREMENT PRIMARY KEY,
                 name VARCHAR(100) UNIQUE NOT NULL,
                 slug VARCHAR(100) UNIQUE NOT NULL,
                 description TEXT,
@@ -239,18 +259,18 @@ async function initializeSchema(db) {
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
             )`,
             `CREATE TABLE IF NOT EXISTS admin_logs (
-                id VARCHAR(36) PRIMARY KEY,
-                adminId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                adminId INT NOT NULL,
                 action VARCHAR(100),
-                targetId VARCHAR(36),
+                targetId INT,
                 changes JSON,
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT fk_admin_logs_adminId FOREIGN KEY (adminId) REFERENCES users(id)
             )`,
             `CREATE TABLE IF NOT EXISTS messages (
-                id VARCHAR(36) PRIMARY KEY,
-                senderId VARCHAR(36) NOT NULL,
-                recipientId VARCHAR(36),
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                senderId INT NOT NULL,
+                recipientId INT,
                 content TEXT,
                 type ENUM('direct','warning','notice') DEFAULT 'direct',
                 subject VARCHAR(255),
@@ -260,10 +280,10 @@ async function initializeSchema(db) {
                 createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
                 CONSTRAINT fk_messages_senderId FOREIGN KEY (senderId) REFERENCES users(id)
             )`,
-            `ALTER TABLE messages MODIFY COLUMN id VARCHAR(36) PRIMARY KEY`,
+            `ALTER TABLE messages MODIFY COLUMN id INT AUTO_INCREMENT PRIMARY KEY`,
             `CREATE TABLE IF NOT EXISTS support_tickets (
-                id VARCHAR(36) PRIMARY KEY,
-                userId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userId INT NOT NULL,
                 subject VARCHAR(255),
                 status ENUM('open','in-progress','resolved','closed') DEFAULT 'open',
                 replies JSON,
@@ -272,8 +292,8 @@ async function initializeSchema(db) {
                 CONSTRAINT fk_support_tickets_userId FOREIGN KEY (userId) REFERENCES users(id)
             )`,
             `CREATE TABLE IF NOT EXISTS upgrades (
-                id VARCHAR(36) PRIMARY KEY,
-                userId VARCHAR(36) NOT NULL,
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                userId INT NOT NULL,
                 currentLevel VARCHAR(100),
                 targetLevel VARCHAR(100),
                 status ENUM('pending','approved','rejected') DEFAULT 'pending',
@@ -373,9 +393,20 @@ async function start() {
 }
 
 // ============================================
-// ERROR HANDLING FOR STARTUP
+// ERROR HANDLING FOR STARTUP & RUNTIME
 // ============================================
 start().catch((e) => {
     console.error('❌ Failed to start server:', e);
     process.exit(1); // Exit with error code
+});
+
+// Handle uncaught exceptions gracefully (cPanel safety)
+process.on('uncaughtException', (err) => {
+    console.error('❌ UNCAUGHT EXCEPTION:', err);
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('❌ UNHANDLED REJECTION:', reason);
+    process.exit(1);
 });

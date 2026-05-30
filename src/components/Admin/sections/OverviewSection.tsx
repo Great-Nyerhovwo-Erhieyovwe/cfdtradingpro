@@ -7,8 +7,7 @@ import {
 import { SummaryCard } from '../ui/SummaryCard';
 import { GlassCard } from '../ui/GlassCard';
 import type { AdminStats } from '../../../types/admin';
-
-const backendUrl = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import { api } from '../../../api/client';
 
 interface Transaction {
     id: string;
@@ -50,20 +49,15 @@ export const OverviewSection = ({ stats, onRefresh, loading }: OverviewSectionPr
     const fetchTransactions = async () => {
         try {
             setTxLoading(true);
-            const token = localStorage.getItem('token');
-            if (!token) return;
+                // Use axios instance which sends cookies (httpOnly) via withCredentials
+            try {
+                const [depositsRes, withdrawalsRes] = await Promise.all([
+                    api.get('/api/admin/transactions/deposits'),
+                    api.get('/api/admin/transactions/withdrawals')
+                ]);
 
-            const [depositsRes, withdrawalsRes] = await Promise.all([
-                fetch(`${backendUrl}/api/admin/transactions/deposits`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                }),
-                fetch(`${backendUrl}/api/admin/transactions/withdrawals`, {
-                    headers: { Authorization: `Bearer ${token}` }
-                })
-            ]);
-
-            const depositsData = await depositsRes.json();
-            const withdrawalsData = await withdrawalsRes.json();
+                const depositsData = depositsRes.data;
+                const withdrawalsData = withdrawalsRes.data;
 
             const deposits = (depositsData.deposits || []).map((d: any) => ({
                 id: d.id,
@@ -105,6 +99,8 @@ export const OverviewSection = ({ stats, onRefresh, loading }: OverviewSectionPr
         } finally {
             setTxLoading(false);
         }
+    } catch (error) {
+        console.error('fetch transaction error:', error);
     };
 
     const formatCurrency = (val: number) =>
@@ -216,4 +212,6 @@ export const OverviewSection = ({ stats, onRefresh, loading }: OverviewSectionPr
             </motion.div>
         </motion.div>
     );
-};
+
+}
+}

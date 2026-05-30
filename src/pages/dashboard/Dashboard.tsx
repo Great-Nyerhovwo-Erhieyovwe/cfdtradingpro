@@ -9,7 +9,7 @@ import { useDashboard } from "../../hooks/useDashboard";
 import "../../styles/dashboard.css";
 import { useNavigate } from "react-router-dom";
 
-// const backendUrl = import.meta.env.VITE_API_URL;
+// const backendUrl = import.meta.env.VITE_API_URL || 'https://api.cfdtradingpro.com';
 
 export const Dashboard: React.FC = () => {
 
@@ -67,7 +67,7 @@ export const Dashboard: React.FC = () => {
 
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    try { localStorage.removeItem("user"); } catch {}
     window.location.href = "/login";
   };
 

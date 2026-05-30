@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
+import Loading from "./Loading/Loading";
+import { api } from "../api/client";
 
 /**
  * AdminRedirect - Redirect /admin to /admin/dashboard
@@ -7,24 +10,32 @@ import { Navigate } from "react-router-dom";
  * - If admin is NOT logged in: redirects to /admin/login
  */
 export function AdminRedirect() {
-  const token = localStorage.getItem("token");
-  const userStr = localStorage.getItem("user");
+  const [status, setStatus] = useState<'loading' | 'admin' | 'redirect'>('loading');
 
-  // Check if logged in
-  if (!token || !userStr) {
-    return <Navigate to="/admin/login" replace />;
+  useEffect(() => {
+    const checkAdmin = async () => {
+      try {
+        const { data } = await api.get('/api/auth/me');
+        if (data?.role === 'admin') {
+          setStatus('admin');
+          return;
+        }
+      } catch {
+        // fall through to redirect
+      }
+      setStatus('redirect');
+    };
+
+    checkAdmin();
+  }, []);
+
+  if (status === 'loading') {
+    return <Loading isLoading={true} message="Checking admin access..." fullScreen={true} />;
   }
 
-  // Check if user is admin
-  try {
-    const user = JSON.parse(userStr);
-    if (user.role !== "admin") {
-      return <Navigate to="/admin/login" replace />;
-    }
-  } catch {
-    return <Navigate to="/admin/login" replace />;
-  }
-
-  // Logged in as admin - redirect to dashboard
-  return <Navigate to="/admin/dashboard" replace />;
+  return status === 'admin' ? (
+    <Navigate to="/admin/dashboard" replace />
+  ) : (
+    <Navigate to="/admin/login" replace />
+  );
 }

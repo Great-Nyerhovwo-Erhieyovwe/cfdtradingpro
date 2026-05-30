@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { apiFetch } from "../../api/client";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -59,28 +60,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
     setIsSaving(true);
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/user/settings`, {
+      const data = await apiFetch("/api/user/settings", {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(settings),
       });
 
-      if (!response.ok) throw new Error("Failed to save settings");
-
-      const data = await response.json();
       console.log("Settings updated:", data);
-
       navigate('/dashboard');
-
-      // if (onSave) onSave(settings);
       onClose();
     } catch (err) {
       console.error(err);
-      alert("Unable to save settings. Please try again.")
+      alert("Unable to save settings. Please try again.");
     } finally {
       setIsSaving(false);
     }

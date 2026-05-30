@@ -4,9 +4,8 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { AiOutlineEye, AiOutlineEyeInvisible, AiOutlineLoading3Quarters, AiOutlineCheckCircle } from 'react-icons/ai'
 import { HiXMark } from 'react-icons/hi2'
+import { api } from '../../../api/client'
 // import { Footer } from '../../../components/Footer/Footer'
-
-const backendUrl = import.meta.env.VITE_API_URL;
 
 const Signup = () => {
     // Form states
@@ -225,25 +224,16 @@ const Signup = () => {
 
         try {
             // Send OTP to backend
-            const response = await fetch(`${backendUrl}/api/auth/send-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: formData.email }),
-            })
+            const { data } = await api.post('/api/auth/send-otp', { email: formData.email })
 
-            const data = await response.json()
-
-            if (response.ok) {
-                // Store dev OTP if provided (for testing in development)
+            if (data?.success) {
                 if (data.devOtp) {
                     console.log(`📧 [DEV] OTP: ${data.devOtp}`)
-                    // Auto-fill OTP for testing (comment out in production)
                     setOtp(data.devOtp)
                 }
-                setOtp(otp => otp)
                 setShowOtpModal(true)
             } else {
-                setFailureMessage(data.message || 'Failed to send OTP. Please try again.')
+                setFailureMessage(data?.message || 'Failed to send OTP. Please try again.')
                 setShowFailureModal(true)
             }
         } catch (error) {
@@ -264,23 +254,20 @@ const Signup = () => {
         setOtpLoading(true)
 
         try {
-            const response = await fetch(`${backendUrl}/api/auth/verify-otp`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    email: formData.email,
-                    otp,
-                    userData: formData,
-                }),
+            const { data } = await api.post('/api/auth/verify-otp', {
+                email: formData.email,
+                otp,
+                userData: formData,
             })
 
-            const data = await response.json()
-
-            if (response.ok) {
+            if (data?.success) {
                 setShowOtpModal(false)
                 setShowSuccessModal(true)
 
-                // Reset form after success
+                if (data?.id) {
+                    try { localStorage.setItem('registeredUserId', String(data.id)); } catch (e) { /* ignore */ }
+                }
+
                 setTimeout(() => {
                     setShowSuccessModal(false)
                     setStep(1)
@@ -301,7 +288,7 @@ const Signup = () => {
                     window.location.href = '/login'
                 }, 2000)
             } else {
-                setErrors({ otp: data.message || 'Invalid OTP. Please try again.' })
+                setErrors({ otp: data?.message || 'Invalid OTP. Please try again.' })
             }
         } catch (error) {
             console.error('Error:', error)

@@ -65,21 +65,10 @@ export default function AdminLogin() {
     onSuccess: async (res: any) => {
       try {
         // API returns a JWT token and user object
-        const token: string | undefined = res?.data?.token;
         const user = res?.data?.user;
 
-        if (!token) {
-          setServerError("Authentication failed: no token received.");
-          return;
-        }
-
-        // Persist the token - the `api` client attaches it to subsequent requests
-        localStorage.setItem("token", token);
-
-        // Basic role check: ensure backend flagged this user as admin
+        // Do not persist token in localStorage when using cookie-based auth
         if (!user || user.role !== "admin") {
-          // Defensive: remove token if returned user is not admin
-          localStorage.removeItem("token");
           setServerError("Account is not authorized as admin.");
           return;
         }

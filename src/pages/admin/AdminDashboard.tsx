@@ -2,7 +2,7 @@
 'use client';
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-// import { api } from "../../api/client";
+import { fetchJson, clearAuthStorage } from "../../api/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { MdDashboard, MdArrowDownward, MdArrowUpward, MdVerified, MdTrendingUp, MdPeople, MdCandlestickChart, MdHeadsetMic, MdMessage, MdEmail, MdNotifications, MdSearch, MdMenu, MdKeyboardArrowDown, MdLogout } from "react-icons/md";
 
@@ -28,37 +28,6 @@ import type { AdminTab, User, Deposit, Withdrawal, Trade, VerificationRequest, U
 import { useDashboard } from "../../hooks/useDashboard";
 import { useNavigate } from "react-router-dom";
 
-// Helper function for fetch requests
-const fetchJson = async (url: string, options: RequestInit = {}) => {
-    const token = localStorage.getItem("token");
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        ...(options.headers || {}),
-    };
-
-    if (token) {
-        headers.Authorization = `Bearer ${token}`;
-    }
-
-    const res = await fetch(url, {
-        headers,
-        credentials: "include",
-        cache: "no-store",
-        ...options,
-    });
-
-    if (res.status === 304) {
-        return null;
-    }
-
-    if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(`Fetch error ${res.status}: ${errorText}`);
-    }
-
-    if (res.status === 204) return null;
-    return res.json();
-};
 
 /**
  * AdminDashboard - Complete Admin Control Panel
@@ -83,8 +52,7 @@ export default function AdminDashboard() {
 
     // Logout handler
     const handleLogout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('adminToken');
+        clearAuthStorage();
         navigate('/admin/login');
     };
 

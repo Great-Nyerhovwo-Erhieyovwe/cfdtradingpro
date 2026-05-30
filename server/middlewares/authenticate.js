@@ -15,7 +15,7 @@
  */
 
 import jwt from "jsonwebtoken";
-import { query } from "../utils/db.js";
+import { provider } from "../services/dataProvider.js";
 
 /**
  * Authenticate Middleware Function
@@ -35,56 +35,55 @@ import { query } from "../utils/db.js";
  *   });
  */
 export async function authenticate(req, res, next) {
-    // ============================================
-    // STEP 1: Extract Authorization Header
-    // ============================================
-    // Expected format: "Authorization: Bearer eyJhbGciOiJIUzI1NiIs..."
-    const auth = req.headers.authorization;
-    
-    // Check if Authorization header exists and starts with "Bearer "
-    if (!auth?.startsWith("Bearer ")) {
-        console.warn('Missing or invalid Authorization header');
-        return res.sendStatus(401); // 401 Unauthorized
-    }
-
-    // Extract token from "Bearer <token>" format
-    // Split by space and get the second element (index 1)
-    const token = auth.split(" ")[1];
-
     try {
+        // ============================================
+        // STEP 1: Extract Authorization Header or Cookie
+        // ============================================
+        // Try Authorization header first, then fall back to cookie
+        let token = null;
+        const auth = req.headers.authorization;
+        
+        if (auth?.startsWith("Bearer ")) {
+            token = auth.split(" ")[1];
+        } else if (req.cookies?.jwt) {
+            // Fall back to httpOnly cookie
+            token = req.cookies.jwt;
+        }
+        
+        if (!token) {
+            console.warn('Missing token in Authorization header or cookie');
+            return res.sendStatus(401); // 401 Unauthorized
+        }
+
         // ============================================
         // STEP 2: Verify JWT Token Signature
         // ============================================
         // Verify token using JWT_SECRET from environment
         // If signature is invalid or token is expired, this throws an error
-        const payload = jwt.verify(
-            token,
-            process.env.JWT_SECRET || process.env.VITE_JWT_SECRET
-        );
+        const secret = process.env.JWT_SECRET || process.env.VITE_JWT_SECRET;
+        if (!secret) {
+            console.error('JWT_SECRET not configured in environment');
+            return res.sendStatus(500);
+        }
 
-        // JWT payload structure (set when token is created in authController.js):
-        // {
-        //   sub: userId,          // 'sub' = subject (standard JWT claim)
-        //   role: userRole,       // User's role (trader, admin, etc.)
-        //   iat: issuedAtTime,    // When token was issued
-        //   exp: expirationTime   // When token expires
-        // }
+        const payload = jwt.verify(token, secret);
 
         // ============================================
         // STEP 3: Fetch User from Database
         // ============================================
 
-        const userId = payload.sub;
+        // Ensure subject is numeric id
+        const userId = Number(payload.sub);
+        if (!Number.isFinite(userId) || Number.isNaN(userId)) {
+            console.warn('Invalid token subject (sub) - not a numeric id');
+            return res.sendStatus(401);
+        }
 
-        const rows = await query(
-            'SELECT * FROM users WHERE id = ? LIMIT 1',
-            [userId]
-        );
-
-        let user = rows[0];
+        // Use provider abstraction which handles MariaDB and local db.json fallback
+        const user = await provider.findOne('users', { id: userId });
 
         if (!user) {
-            console.warn(`User with ID ${userId} not found in database`);
+            console.warn(`User with ID ${userId} not found`);
             return res.sendStatus(401);
         }
 

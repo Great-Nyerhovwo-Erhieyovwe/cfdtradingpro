@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
+import { fetchJson } from "../../api/client";
 
 interface DashboardNotification {
   id: string;
@@ -11,7 +12,6 @@ interface DashboardNotification {
   icon: string;
 }
 
-const backendUrl = import.meta.env.VITE_API_URL;
 
 const NotificationsPageContent: React.FC = () => {
   const [notifications, setNotifications] = useState<DashboardNotification[]>([]);
@@ -23,15 +23,9 @@ const NotificationsPageContent: React.FC = () => {
 
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
     Promise.all([
-      fetch(`${backendUrl}/api/dashboard/user`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json()),
-      fetch(`${backendUrl}/api/dashboard/notifications`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r => r.json())
+      fetchJson('/api/dashboard/user'),
+      fetchJson('/api/dashboard/notifications'),
     ]).then(([userData, notificationsData]) => {
       if (userData) {
         setUserProfile({
@@ -280,14 +274,7 @@ export const NotificationsPage: React.FC = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then(r => r.json())
+    fetchJson('/api/dashboard/user')
       .then(d => {
         if (d) {
           setUserProfile({

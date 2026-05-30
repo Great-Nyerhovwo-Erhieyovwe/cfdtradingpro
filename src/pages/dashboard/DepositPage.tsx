@@ -2,8 +2,7 @@ import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { apiFetch, fetchJson } from "../../api/client";
 
 const parseCurrencyValue = (value: any, fallback: number = 0) => {
   if (value === null || value === undefined || value === "") return fallback;
@@ -124,34 +123,13 @@ const DepositPageContent: React.FC = () => {
   // ============================================================================
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoading(false);
-        window.location.href = "/login";
-        return;
-      }
-
       try {
-        // Fetch portfolio, deposit history, user, and deposit settings in parallel
-        const [portfolioRes, depositsRes, userRes, settingsRes] = await Promise.all([
-          fetch(`${backendUrl}/api/dashboard/portfolio`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/requests/deposits`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/dashboard/user`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/dashboard/deposit-settings`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        const [portfolio, deposits, user, settings] = await Promise.all([
+          fetchJson('/api/dashboard/portfolio'),
+          fetchJson('/api/requests/deposits'),
+          fetchJson('/api/dashboard/user'),
+          fetchJson('/api/dashboard/deposit-settings'),
         ]);
-
-        const portfolio = await portfolioRes.json();
-        const deposits = await depositsRes.json();
-        const user = await userRes.json();
-        const settings = await settingsRes.json();
 
         setCurrency(user.currency || "USD");
 
@@ -210,23 +188,16 @@ const DepositPageContent: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No authentication token");
-
-      // Call backend endpoint to create deposit request
-      const response = await fetch(`${backendUrl}/api/requests/deposit`, {
-        method: "POST",
+      const data = await apiFetch('/api/requests/deposit', {
+        method: 'POST',
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           amount: parsedAmount,
           paymentMethod: selectedMethod,
         }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         // Success! Show confirmation modal
@@ -241,21 +212,15 @@ const DepositPageContent: React.FC = () => {
         setAmount("");
 
         // Refresh deposit history after 1 second
-        setTimeout(() => {
-          const token = localStorage.getItem("token");
-          fetch(`${backendUrl}/api/requests/deposits`, {
-            headers: { Authorization: `Bearer ${token}` },
-          })
-            .then((r) => r.json())
-            .then((d) => {
-              if (d.success && d.deposits) {
-                const sorted = d.deposits.sort(
-                  (a: any, b: any) =>
-                    new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
-                );
-                setRecentDeposits(sorted.slice(0, 5));
-              }
-            });
+        setTimeout(async () => {
+          const d = await fetchJson('/api/requests/deposits');
+          if (d.success && d.deposits) {
+            const sorted = d.deposits.sort(
+              (a: any, b: any) =>
+                new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+            );
+            setRecentDeposits(sorted.slice(0, 5));
+          }
         }, 1000);
       } else {
         // Backend validation failed
@@ -552,18 +517,9 @@ export const DepositPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    // Fetch real user profile from API
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadUser = async () => {
+      try {
+        const d = await fetchJson('/api/dashboard/user');
         if (d) {
           setUserProfile({
             name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
@@ -571,11 +527,14 @@ export const DepositPage: React.FC = () => {
             isVerified: d.emailVerified || false,
           });
         }
+      } catch {
+        // ignore; unauthenticated state handled by axios interceptor
+      } finally {
         setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
+      }
+    };
+
+    loadUser();
   }, []);
 
   if (loading) return null;

@@ -3,8 +3,7 @@ import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
 import { useAuthStatus } from "../../hooks/useAuth";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { fetchJson, apiFetch } from "../../api/client";
 
 const VerificationPageContent: React.FC = () => {
   // STATE
@@ -39,34 +38,19 @@ const VerificationPageContent: React.FC = () => {
   // FETCH DATA ON MOUNT
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
       try {
-        const [userRes, verificationsRes] = await Promise.all([
-          fetch(`${backendUrl}/api/dashboard/user`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${backendUrl}/api/requests/verifications`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
+        const [user, verifications] = await Promise.all([
+          fetchJson("/api/dashboard/user"),
+          fetchJson("/api/requests/verifications"),
         ]);
 
-        const user = await userRes.json();
-        const verifications = await verificationsRes.json();
-
-        // Set full name from user
         if (user) {
           setFullName(
             `${user.firstName || ""} ${user.lastName || ""}`.trim() || ""
           );
         }
 
-        // Set recent verifications
-        if (verifications.success && verifications.verifications) {
+        if (verifications?.success && verifications.verifications) {
           const sorted = verifications.verifications.sort(
             (a: any, b: any) =>
               new Date(b.requestedAt).getTime() -
@@ -116,15 +100,8 @@ const VerificationPageContent: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${backendUrl}/api/requests/verify`, {
+      const data = await apiFetch("/api/requests/verify", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           documentType,
           documentNumber,
@@ -132,8 +109,6 @@ const VerificationPageContent: React.FC = () => {
           fullName,
         }),
       });
-
-      const data = await response.json();
 
       if (data.success) {
         setModal({
@@ -143,28 +118,23 @@ const VerificationPageContent: React.FC = () => {
           type: "success",
         });
 
-        // Reset form
         setDocumentNumber("");
         setExpiryDate("");
 
         // Refresh verification history
-        setTimeout(() => {
-          const token = localStorage.getItem("token");
-          if (token) {
-            fetch(`${backendUrl}/api/requests/verifications`, {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-              .then((r) => r.json())
-              .then((d) => {
-                if (d.success && d.verifications) {
-                  const sorted = d.verifications.sort(
-                    (a: any, b: any) =>
-                      new Date(b.requestedAt).getTime() -
-                      new Date(a.requestedAt).getTime()
-                  );
-                  setRecentVerifications(sorted.slice(0, 5));
-                }
-              });
+        setTimeout(async () => {
+          try {
+            const refreshed = await fetchJson("/api/requests/verifications");
+            if (refreshed?.success && refreshed.verifications) {
+              const sorted = refreshed.verifications.sort(
+                (a: any, b: any) =>
+                  new Date(b.requestedAt).getTime() -
+                  new Date(a.requestedAt).getTime()
+              );
+              setRecentVerifications(sorted.slice(0, 5));
+            }
+          } catch (refreshError) {
+            console.error("Failed to refresh verifications:", refreshError);
           }
         }, 1000);
       } else {
@@ -401,27 +371,24 @@ export const VerificationPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
-        if (d) {
+    const loadProfile = async () => {
+      try {
+        const user = await fetchJson("/api/dashboard/user");
+        if (user) {
           setUserProfile({
-            name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
-            email: d.email || "",
-            isVerified: d.emailVerified || false,
+            name: `${user.firstName || ""} ${user.lastName || ""}`.trim() || "User",
+            email: user.email || "",
+            isVerified: user.emailVerified || false,
           });
         }
+      } catch (error) {
+        console.error("Failed to load user profile:", error);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadProfile();
   }, []);
 
   if (loading) return null;

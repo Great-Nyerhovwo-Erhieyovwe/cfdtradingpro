@@ -1,13 +1,13 @@
 import nodemailer from "nodemailer";
 import { provider } from "../services/dataProvider.js";
-import { query } from '../utils/db.js';
+import { getDb, query } from '../utils/db.js';
 
 
 // Simple in-memory OTP store (replace with Redis in production)
 const otpStore = new Map();
 
 const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || process.env.VITE_SMTP_HOST || 'smtp.hostinger.com',
+    host: process.env.SMTP_HOST || process.env.VITE_SMTP_HOST || 'panel404.harmondns.net',
     port: process.env.SMTP_PORT || process.env.VITE_SMTP_PORT || 465,
     secure: false,
     auth: {
@@ -24,10 +24,52 @@ function generateOTP() {
 
 async function sendOTPEmail(email, otp) {
     const mailOptions = {
-        from: process.env.EMAIL_FROM || process.env.VITE_EMAIL_FROM || 'support@cfdtradingpro.com',
+        from: process.env.EMAIL_FROM || process.env.VITE_EMAIL_FROM || 'noreply@cfdtradingpro.com',
         to: email,
         subject: 'CFD Trading Pro - Verification Code',
-        text: `Your verification code is: ${otp}`,
+        text: `
+        Hello,
+
+Thanks for choosing CFD Trading Pro. Your verification code is ${otp}.
+
+Enter this code on the sign-up page to complete your registration. The code expires in 10 minutes.
+
+If you did not request this email, please ignore it.
+
+Best regards,
+CFD Trading Team`,
+        html: `
+            <div style="font-family:Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#f8fafc; padding:32px;">
+                <div style="max-width:600px; margin:0 auto; background:#ffffff; border-radius:24px; overflow:hidden; box-shadow:0 24px 80px rgba(15,23,42,0.12);">
+                    <div style="background:#0f172a; padding:32px 24px; text-align:center;">
+                        <img src="https://cfdtradingpro.com/logo192.png" alt="CFD Trading Pro" width="64" height="64" style="display:block; margin:0 auto 16px;" />
+                        <h1 style="color:#ffffff; font-size:28px; margin:0;">Welcome to CFD Trading Pro</h1>
+                        <p style="color:#94a3b8; margin:12px 0 0; font-size:15px; line-height:1.6;">Secure your account with a one-time verification code.</p>
+                    </div>
+                    <div style="padding:32px 32px 24px; color:#0f172a;">
+                        <p style="margin:0 0 20px; font-size:16px; line-height:1.75; color:#475569;">Hi there,</p>
+                        <p style="margin:0 0 24px; font-size:16px; line-height:1.75; color:#475569;">
+                            Thanks for signing up with CFD Trading Pro. Use the code below to verify your email address and complete your registration.
+                        </p>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:16px; padding:28px 24px; text-align:center; margin-bottom:32px;">
+                            <p style="margin:0 0 12px; font-size:14px; color:#64748b; letter-spacing:0.08em; text-transform:uppercase;">Your verification code</p>
+                            <p style="margin:0; font-size:32px; letter-spacing:0.2em; font-weight:700; color:#0f172a;">${otp}</p>
+                        </div>
+                        <a href="https://cfdtradingpro.com/login" style="display:inline-block; background:#0ea5e9; color:#ffffff; text-decoration:none; padding:14px 26px; border-radius:999px; font-size:16px; font-weight:600;">Verify my account</a>
+                        <p style="margin:28px 0 0; font-size:14px; line-height:1.8; color:#64748b;">
+                            This code expires in 10 minutes. If you did not request this verification, you can safely ignore this message.
+                        </p>
+                        <p style="margin:24px 0 0; font-size:14px; line-height:1.8; color:#64748b;">
+                            Need help? Visit our <a href="https://t.me/cfd_support/" style="color:#0ea5e9; text-decoration:none;">support center</a>.
+                        </p>
+                    </div>
+                    <div style="background:#f8fafc; padding:20px 24px; text-align:center; font-size:13px; color:#94a3b8;">
+                        <p style="margin:0;">CFD Trading Pro • Secure trading and global markets</p>
+                    </div>
+                </div>
+            </div>
+        
+        `,
     };
     try {
         await transporter.sendMail(mailOptions);
@@ -85,32 +127,28 @@ export async function verifyOtp(req, res) {
         if (stored.otp !== otp) return res.status(400).json({ message: 'Invalid OTP' });
 
         // insert new user with plain password (insecure; per user request)
-        const result = await query(
-            `INSERT INTO users (email, password, firstName, lastName, username, country, currency, accountType, dateOfBirth, role, emailVerified, createdAt, balanceUsd, roi)
-    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+        const doc = {
             email,
-            userData.password,
-            userData.firstName || '',
-            userData.lastName || '',
-            userData.username || '',
-            userData.country || '',
-            userData.currency || 'USD',
-            userData.accountType || 'individual',
-            userData.dateOfBirth || null,
-            'trader',
-            true,
-            new Date(),
-            0,
-            0
-        ]
-        )
+            password: userData.password,
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            username: userData.username || '',
+            country: userData.country || '',
+            currency: userData.currency || 'USD',
+            accountType: userData.accountType || 'individual',
+            dateOfBirth: userData.dateOfBirth || null,
+            role: 'trader',
+            emailVerified: true,
+            createdAt: new Date(),
+            balanceUsd: 0,
+            roi: 0
+        };
 
-        // insert new created user
-        // const insertedId = result.insertId
-
+        const insertResult = await provider.insertOne('users', doc);
+        const insertedId = insertResult?.insertedId || insertResult?._id || null;
 
         otpStore.delete(email);
-        return res.json({ success: true, id: result.insertId });
+        return res.json({ success: true, id: insertedId });
     } catch (e) {
         console.error('❌ VerifyOtp error:', e.message || e);
         console.error('❌ Stack:', e.stack);
@@ -127,17 +165,19 @@ export async function login(req, res) {
             return res.status(400).json({ message: 'Missing credentials' });
         }
         
-        console.log('🔍 Querying database for user:', email);
-        const users = await query(
-            'SELECT * FROM users WHERE email = ?',
-            [email]
-        );
+        const db = getDb();
+        if (!db && process.env.NODE_ENV === 'production') {
+            console.error('❌ User login failed because database is not connected');
+            return res.status(500).json({ message: 'Database not connected' });
+        }
 
-        if (users.length === 0) {
+        console.log('🔍 Looking up user for email:', email);
+        const user = await provider.findOne('users', { email });
+
+        if (!user) {
             console.log('❌ User not found:', email);
             return res.status(401).json({ message: 'Invalid credentials' });
         }
-        const user = users[0];
         console.log('👤 User found:', { id: user.id, email: user.email, role: user.role });
         
         if (password !== user.password) {
@@ -159,17 +199,27 @@ export async function login(req, res) {
         // Generate JWT token for frontend
         const jwt = await import('jsonwebtoken').then(m => m.default);
         const token = jwt.sign(
-            { sub: (user._id || user.id)?.toString() || user.email, role: user.role },
+            { sub: Number(user.id || user._id), role: user.role },
             process.env.JWT_SECRET || process.env.VITE_JWT_SECRET,
             { expiresIn: process.env.JWT_EXPIRES_IN || process.env.VITE_JWT_EXPIRES_IN || '24h' }
         );
-        console.log('✅ Token generated, returning response');
+        console.log('✅ Token generated, setting httpOnly cookie');
+        
+        // Set httpOnly cookie so token is automatically included in requests
+        res.cookie('jwt', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production',
+            sameSite: process.env.NODE_ENV === 'production' || process.env.VITE_APP_ENV === 'production' ? 'None' : 'Lax',
+            domain: process.env.COOKIE_DOMAIN || undefined,
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours
+            path: '/',
+        });
         
         return res.json({ 
             success: true, 
             token,
             user: { 
-                id: user.id?.toString(), 
+                id: Number(user.id || user._id), 
                 email: user.email, 
                 role: user.role,
                 firstName: user.firstName,
@@ -185,22 +235,16 @@ export async function login(req, res) {
 
 export async function me(req, res) {
     try {
-        const userId = req.user?.sub;
-        
-        if (!userId) {
+        // `authenticate` attaches full user object to req.user
+        const user = req.user;
+
+        if (!user || !user.id) {
             return res.status(401).json({ message: 'Unauthorized' });
         }
 
-        const users = await query(
-            'SELECT id, email, role, balanceUsd, roi, firstName, lastName FROM users WHERE id = ?',
-            [userId]
-        );
-
-        if (users.length === 0) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        return res.json(users[0]);
+        const found = await provider.findOne('users', { id: user.id });
+        if (!found) return res.status(404).json({ message: 'User not found' });
+        return res.json(found);
     } catch (err) {
         console.error('❌ Me error:', err.message || err);
         console.error('❌ Stack:', err.stack);

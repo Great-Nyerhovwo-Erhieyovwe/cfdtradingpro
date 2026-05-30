@@ -3,6 +3,7 @@ import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { Modal } from "../../components/Modal/Modal";
 import { Loading } from "../../components/Loading/Loading";
 import { useDarkMode } from "../../contexts/DarkModeContext";
+import { api, fetchJson, apiFetch } from "../../api/client";
 
 interface UserProfile {
   firstName: string;
@@ -21,7 +22,6 @@ interface SettingsState {
   timezone: string;
 }
 
-const backendUrl = import.meta.env.VITE_API_URL;
 
 const SettingsPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"profile" | "preferences">("preferences");
@@ -58,23 +58,21 @@ const SettingsPageContent: React.FC = () => {
 
   // FETCH DATA ON MOUNT
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
+    const userStr = localStorage.getItem('user');
+    if (!userStr) {
       setIsLoading(false);
       window.location.href = '/login';
       return;
     }
 
     Promise.all([
-      fetch(`${backendUrl}/api/dashboard/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
-      fetch(`${backendUrl}/api/requests/settings`, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then((r) => r.json()),
+      api.get('/api/dashboard/user'),
+      api.get('/api/requests/settings')
     ])
-      .then(([userData, settingsData]) => {
-        // Set user profile
+      .then(([userRes, settingsRes]) => {
+        const userData = userRes.data;
+        const settingsData = settingsRes.data;
+
         if (userData) {
           setProfile({
             firstName: userData.firstName || "",
@@ -87,7 +85,6 @@ const SettingsPageContent: React.FC = () => {
           });
         }
 
-        // Set settings - use existing settings if available
         if (settingsData.settings) {
           setSettings({
             darkMode: settingsData.settings.darkMode || false,
@@ -117,23 +114,14 @@ const SettingsPageContent: React.FC = () => {
       setDarkMode(value);
     }
 
-    // Submit to backend asynchronously (no modal, silent update)
     try {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-
-      const response = await fetch(`${backendUrl}/api/requests/settings`, {
+      await apiFetch('/api/requests/settings', {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(newSettings),
       });
-
-      if (!response.ok) {
-        console.error("Failed to save settings");
-      }
     } catch (error) {
       console.error("Error saving settings:", error);
     }
@@ -150,14 +138,10 @@ const SettingsPageContent: React.FC = () => {
   const handleSaveProfile = async () => {
     setIsSubmitting(true);
     try {
-      const token = localStorage.getItem("token");
-      if (!token) throw new Error("No token");
-
-      const response = await fetch(`${backendUrl}/api/dashboard/user`, {
+      const response = await apiFetch('/api/dashboard/user', {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           firstName: profile.firstName,
@@ -166,7 +150,7 @@ const SettingsPageContent: React.FC = () => {
         }),
       });
 
-      if (response.ok) {
+      if (response) {
         setModal({
           isOpen: true,
           title: "Profile Updated",
@@ -474,18 +458,9 @@ export const SettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      window.location.href = '/login';
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadUserProfile = async () => {
+      try {
+        const d = await fetchJson('/api/dashboard/user');
         if (d) {
           setUserProfile({
             name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
@@ -493,9 +468,14 @@ export const SettingsPage: React.FC = () => {
             isVerified: d.emailVerified,
           });
         }
+      } catch {
+        // handled by auth interceptor
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadUserProfile();
   }, []);
 
   if (loading) return null;

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 // import Loading from "../../components/Loading/Loading";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { fetchJson } from "../../api/client";
 
 const SupportPageContent: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"faq" | "contact">("faq");
@@ -17,7 +16,7 @@ const SupportPageContent: React.FC = () => {
     if (!document.getElementById("tawk-script")) {
       const s1 = document.createElement("script");
       s1.id = "tawk-script";
-      s1.src = "https://embed.tawk.to/twkid/default"; // updated later
+      s1.src = "https://embed.tawk.to/69d8ec37a5ae3e1c3b5625ae/default"; // updated later
       s1.async = true;
       s1.charset = "UTF-8";
       s1.setAttribute("crossorigin", "*");
@@ -275,18 +274,9 @@ export const SupportPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      setLoading(false);
-      window.location.href = '/login';
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
-      .then((r) => r.json())
-      .then((d) => {
+    const loadUserProfile = async () => {
+      try {
+        const d = await fetchJson('/api/dashboard/user');
         if (d) {
           setUserProfile({
             name: `${d.firstName || ""} ${d.lastName || ""}`.trim() || "User",
@@ -294,9 +284,14 @@ export const SupportPage: React.FC = () => {
             isVerified: d.emailVerified || false,
           });
         }
+      } catch {
+        // auth handled by interceptor
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    };
+
+    loadUserProfile();
   }, []);
 
   if (loading) return null;

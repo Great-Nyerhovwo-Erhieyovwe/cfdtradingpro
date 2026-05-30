@@ -20,7 +20,7 @@
 
 // const db = require('../utils/db');
 // import db from '../utils/db.js';
-import { query } from '../utils/db.js';
+import { query, getDb } from '../utils/db.js';
 
 // ============================================================================
 // DEPOSIT REQUEST CONTROLLER
@@ -516,7 +516,7 @@ async function createUpgrade(req, res) {
     let upgradeAmount = amount || 0;
     if (!amount) {
       try {
-        const [plans] = await query(
+        const plans = await query(
           'SELECT priceMonthly FROM upgrade_plans WHERE name = ? LIMIT 1',
           [level]
         );
@@ -527,7 +527,16 @@ async function createUpgrade(req, res) {
       }
     }
 
-    const result = await query(
+    // Use getDb() to get the pool and execute directly to get metadata with insertId
+    const db = getDb();
+    if (!db) {
+      return res.status(500).json({
+        success: false,
+        message: 'Database not connected',
+      });
+    }
+
+    const [result] = await db.execute(
       `INSERT INTO upgrades (userId, upgradeLevel, amount, status, requestedAt, createdAt)
       VALUES (?, ?, ?, ?, ?, ?)`,
       [userId, level, upgradeAmount, 'pending', new Date(), new Date()]

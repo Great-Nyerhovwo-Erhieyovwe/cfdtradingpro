@@ -2,7 +2,7 @@
 -- MariaDB/MySQL compatible
 
 CREATE TABLE users (
-    id VARCHAR(36) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(100) NOT NULL,
     lastName VARCHAR(100) NOT NULL,
     username VARCHAR(255) NOT NULL UNIQUE,
@@ -37,16 +37,16 @@ CREATE TABLE users (
 );
 
 CREATE TABLE portfolios (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     name VARCHAR(255) NOT NULL,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (userId) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE deposits (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     amount DECIMAL(15, 2) NOT NULL,
     paymentMethod ENUM('bank', 'card', 'crypto', 'wallet') NOT NULL DEFAULT 'crypto',
     status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
@@ -57,8 +57,8 @@ CREATE TABLE deposits (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE withdrawals (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     amount DECIMAL(15, 2) NOT NULL,
     withdrawalMethod VARCHAR(50) NOT NULL,
     destinationAddress VARCHAR(255),
@@ -71,8 +71,8 @@ CREATE TABLE withdrawals (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE trades (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     amount DECIMAL(15,2) NOT NULL,
     asset VARCHAR(50) NOT NULL,
     type ENUM('buy', 'sell') NOT NULL,
@@ -88,8 +88,8 @@ CREATE TABLE trades (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE verifications (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     documentType VARCHAR(50) NOT NULL,
     documentNumber VARCHAR(255) NOT NULL,
     expiryDate DATE NULL,
@@ -102,7 +102,7 @@ CREATE TABLE verifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE upgrade_plans (
-    id VARCHAR(36) PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL UNIQUE,
     description TEXT,
     priceMonthly DECIMAL(15,2) DEFAULT 0,
@@ -112,8 +112,8 @@ CREATE TABLE upgrade_plans (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE upgrades (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     upgradeLevel ENUM('free', 'mini', 'standard', 'pro', 'premium') DEFAULT 'free',
     amount DECIMAL(15, 2) NOT NULL,
     status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
@@ -125,8 +125,8 @@ CREATE TABLE upgrades (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE transactions (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     type ENUM('trade', 'deposit', 'withdrawal') NOT NULL,
     referenceId VARCHAR(50),
     amount DECIMAL(18, 6) NOT NULL,
@@ -140,8 +140,8 @@ CREATE TABLE transactions (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE notifications (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     `read` BOOLEAN DEFAULT FALSE,
@@ -150,9 +150,9 @@ CREATE TABLE notifications (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE messages (
-    id VARCHAR(36) PRIMARY KEY,
-    senderId VARCHAR(36) NOT NULL,
-    recipientId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    senderId INT NOT NULL,
+    recipientId INT NOT NULL,
     content TEXT NOT NULL,
     isRead BOOLEAN DEFAULT FALSE,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -175,8 +175,8 @@ INSERT INTO deposit_settings (id, bank_account_number, bank_account_holder, bank
 VALUES (1, '1234567890', 'CFD Financial Bank', '121000248', 'CFD Financial Bank', 'THQYgNzTYo7g5aBhhJLMc2FaA632FwZ4WK');
 
 CREATE TABLE support_tickets (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     subject VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     status ENUM('open', 'closed') DEFAULT 'open',
@@ -185,8 +185,8 @@ CREATE TABLE support_tickets (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE broadcasts (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     message TEXT NOT NULL,
     type ENUM('upgrade', 'maintenance', 'info') DEFAULT 'info',
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -194,8 +194,8 @@ CREATE TABLE broadcasts (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE wallets (
-    id VARCHAR(36) PRIMARY KEY,
-    userId VARCHAR(36) NOT NULL,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    userId INT NOT NULL,
     balance DECIMAL(18,2) DEFAULT 0,
     balance_usd DECIMAL(18,2) DEFAULT 0,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -206,11 +206,11 @@ CREATE TABLE wallets (
 
 -- Admin User
 INSERT INTO users (id, firstName, lastName, username, email, password, country, currency, accountType, role, emailVerified, balanceUsd, roi)
-VALUES ('550e8400-e29b-41d4-a716-446655440000', 'Admin', 'User', 'admin_cfd', 'cfdtradingpro@gmail.com', 'CFDTrading@101', 'USA', 'USD', 'individual', 'admin', TRUE, 5000.00, 0.00);
+VALUES (1, 'Admin', 'User', 'admin_cfd', 'cfdtradingpro@gmail.com', 'CFDTrading@101', 'USA', 'USD', 'individual', 'admin', TRUE, 5000.00, 0.00);
 
 -- Upgrade Plans
 INSERT INTO upgrade_plans (id, name, description, priceMonthly, priceAnnual, features) VALUES
-('660e8400-e29b-41d4-a716-446655440001', 'mini', 'Mini Plan - Entry Level Trading', 49.99, 499.90, 'Up to $5,000 trading limit,Basic market data,Email support'),
-('660e8400-e29b-41d4-a716-446655440002', 'standard', 'Standard Plan - Regular Traders', 299.99, 2999.90, 'Up to $50,000 trading limit,Advanced market data,Priority support,API access'),
-('660e8400-e29b-41d4-a716-446655440003', 'pro', 'Pro Plan - Professional Traders', 799.99, 7999.90, 'Up to $500,000 trading limit,Real-time data,24/7 support,Unlimited trades,Dedicated manager'),
-('660e8400-e29b-41d4-a716-446655440004', 'premium', 'Premium Plan - Institutional', 1999.99, 19999.90, 'Unlimited trading limit,Premium data feeds,24/7 dedicated support,Custom integrations');
+(1, 'mini', 'Mini Plan - Entry Level Trading', 49.99, 499.90, 'Up to $5,000 trading limit,Basic market data,Email support'),
+(2, 'standard', 'Standard Plan - Regular Traders', 299.99, 2999.90, 'Up to $50,000 trading limit,Advanced market data,Priority support,API access'),
+(3, 'pro', 'Pro Plan - Professional Traders', 799.99, 7999.90, 'Up to $500,000 trading limit,Real-time data,24/7 support,Unlimited trades,Dedicated manager'),
+(4, 'premium', 'Premium Plan - Institutional', 1999.99, 19999.90, 'Unlimited trading limit,Premium data feeds,24/7 dedicated support,Custom integrations');

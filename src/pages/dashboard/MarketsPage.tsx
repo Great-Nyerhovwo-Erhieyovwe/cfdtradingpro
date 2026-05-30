@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DashboardLayout } from "../../components/Dashboard/DashboardLayout";
 import { useNavigate } from "react-router-dom";
-
-const backendUrl = import.meta.env.VITE_API_URL;
+import { fetchJson } from "../../api/client";
 
 const MarketsPageContent: React.FC = () => {
 
@@ -14,8 +13,7 @@ const MarketsPageContent: React.FC = () => {
   const [markets, setMarkets] = useState<Array<any>>([]);
 
   useEffect(() => {
-    fetch(`${backendUrl}/api/market`)
-      .then((r) => r.json())
+    fetchJson('/api/market')
       .then((d) => setMarkets(d.markets || []))
       .catch(() => setMarkets([]));
   }, []);
@@ -167,18 +165,11 @@ export const MarketsPage: React.FC = () => {
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      window.location.href = '/login'
-      return;
-    }
-
-    fetch(`${backendUrl}/api/dashboard/user`, { headers: { 'Authorization': `Bearer ${token}` } })
-      .then((r) => r.json())
+    fetchJson('/api/dashboard/user')
       .then((d) => setUser({
         name: `${d.firstName || ''} ${d.lastName || ''}`.trim() || 'User',
         email: d.email || '',
-        isVerified: d.emailVerified || false
+        isVerified: d.emailVerified || false,
       }))
       .catch(() => setUser({ name: 'User', email: '', isVerified: false }));
   }, []);
